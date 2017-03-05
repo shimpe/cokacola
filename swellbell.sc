@@ -8,6 +8,7 @@ var absdurationlabel,lowlabel,midlabel,highlabel;
 var absduration;
 
 ~slidecollection = (); // mapping from ( low/mid/high, slide index ) => slidemodel (column *values*: enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument)
+
 ~slidecollection.make_slidekey = ({ |self, lowmidhigh, slideno |
 	(lowmidhigh ++ "_" ++ slideno).asString;
 });
@@ -48,7 +49,7 @@ var absduration;
 			ui[\columns][i].instrument.value_(columns[i.asSymbol].instrument);
 		});
 
-		~ui[\canvas].refresh;
+		ui[\canvas].refresh;
 	});
 });
 
@@ -155,7 +156,7 @@ var absduration;
 
 });
 
-~ui.get_active_slidekey = ({ | self|
+~ui.get_active_slidekey = ({ | self, slidecollection |
 	var lowmidhigh = "";
 	var slideno = 0;
 
@@ -174,7 +175,47 @@ var absduration;
 		});
 	});
 
-	~slidecollection[\make_slidekey].value(~slidecollection, lowmidhigh, slideno);
+	slidecollection[\make_slidekey].value(slidecollection, lowmidhigh, slideno);
+});
+
+~ui.update_listview_colors = ({| self, slidecollection |
+	~ui.lowlistview.colors_({
+		Array.fill(26, {|i|
+			var slidekey = slidecollection[\make_slidekey].value(slidecollection, "low", i);
+			i.postln;
+			if ((slidecollection[slidekey.asSymbol].notNil), {
+				Color.green;
+			}, /* else */
+			{
+				Color.white;
+			});
+
+		});
+	}.value);
+	~ui.midlistview.colors_({
+		Array.fill(26, {|i|
+			var slidekey = slidecollection[\make_slidekey].value(slidecollection, "mid", i);
+			if ((slidecollection[slidekey.asSymbol].notNil), {
+				Color.green;
+			}, /* else */
+			{
+				Color.white;
+			});
+
+		});
+	}.value);
+	~ui.highlistview.colors_({
+		Array.fill(26, {|i|
+			var slidekey = slidecollection[\make_slidekey].value(slidecollection, "high", i);
+			if ((slidecollection[slidekey.asSymbol].notNil), {
+				Color.green;
+			}, /* else */
+			{
+				Color.white;
+			});
+
+		});
+	}.value);
 });
 
 s.waitForBoot({
@@ -267,8 +308,8 @@ s.waitForBoot({
 	   .string_("Register slide")
 	   .states_([["Register slide",Color.black,Color.gray]])
 	   .action_({ | b |
-		~slidecollection[\from_ui].value(~slidecollection, ~ui, ~ui[\get_active_slidekey].value(~ui));
-		~slidecollection.postln;
+		~slidecollection[\from_ui].value(~slidecollection, ~ui, ~ui[\get_active_slidekey].value(~ui, ~slidecollection));
+		~ui[\update_listview_colors].value(~ui, ~slidecollection);
 	});
 	~ui.registerstepbutton = Button.new(w, Rect()).string_("Register step").states_([["Register step",Color.black,Color.gray]]);
 	~ui.savebutton = Button.new(w, Rect()).string_("Save").states_([["Save",Color.black,Color.gray]]);
@@ -293,7 +334,7 @@ s.waitForBoot({
 	   .action_({
 		| sel |
 		var slide_number = sel.value;
-		var slidekey = ~ui[\get_active_slidekey].value(~ui);
+		var slidekey = ~ui[\get_active_slidekey].value(~ui, ~slidecollection);
 		~ui.midlistview.value_(0);
 		~ui.highlistview.value_(0);
 		~slidecollection[\to_ui].value(~slidecollection, ~ui, slidekey);
@@ -310,7 +351,7 @@ s.waitForBoot({
 	   .action_({
 		| sel |
 		var slide_number = sel.value;
-		var slidekey = ~ui[\get_active_slidekey].value(~ui);
+		var slidekey = ~ui[\get_active_slidekey].value(~ui, ~slidecollection);
 		~ui.lowlistview.value_(0);
 		~ui.highlistview.value_(0);
 		~slidecollection[\to_ui].value(~slidecollection, ~ui, slidekey);
@@ -326,7 +367,7 @@ s.waitForBoot({
 	   .action_({
 		| sel |
 		var slide_number = sel.value;
-		var slidekey = ~ui[\get_active_slidekey].value(~ui);
+		var slidekey = ~ui[\get_active_slidekey].value(~ui, ~slidecollection);
 		~ui.lowlistview.value_(0);
 		~ui.midlistview.value_(0);
 		~slidecollection[\to_ui].value(~slidecollection, ~ui, slidekey);

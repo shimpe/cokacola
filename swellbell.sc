@@ -7,15 +7,8 @@ var absdurationlabel,lowlabel,midlabel,highlabel;
 var absduration;
 
 ~ui = ();
-~ui.enabled = [];
-~ui.volume_from = [];
-~ui.volume_to = [];
-~ui.note_from = [];
-~ui.note_to = [];
-~ui.slide = [];
-~ui.steps = [];
-~ui.duration = [];
-~ui.instrument = [];
+~ui.columns = []; // enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument
+
 ~ui.absduration = nil;
 ~ui.loadbutton = nil;
 ~ui.playstepbutton = nil;
@@ -30,7 +23,7 @@ var absduration;
 ~ui.canvas = nil;
 
 ~ui.calc_total_duration = { | self |
-	var enabled_entries = self.enabled.select({ | item, i| item.value });
+	var enabled_entries = self.columns.select({ | item, i| item.enabled.value }).postln;
 };
 
 ~ui.miditoname = ({ arg self, note = 60;
@@ -120,15 +113,16 @@ s.waitForBoot({
 			[instrumentlabel, instr, nil],
 		);
 
-		~ui.enabled = ~ui.enabled.add(cb);
-		~ui.volume_from = ~ui.volume_from.add(volumestart);
-		~ui.volume_to = ~ui.volume_to.add(endvolume);
-		~ui.note_from = ~ui.note_from.add(notestart);
-		~ui.note_to = ~ui.note_to.add(noteend);
-		~ui.slide = ~ui.slide.add(slide);
-		~ui.steps = ~ui.steps.add(steps);
-		~ui.duration = ~ui.duration.add(duration);
-		~ui.instrument = ~ui.instrument.add(instr);
+		var column = ();
+		column.enabled = cb;
+		column.volume_from = volumestart;
+		column.note_from = notestart;
+		column.note_to = noteend;
+		column.slide = slide;
+		column.steps = steps;
+		column.duration = duration;
+		column.instrument = instr;
+		~ui.columns = ~ui.columns.add(column);
 
 		col.add(cb);
 		col.add(paramgrid);

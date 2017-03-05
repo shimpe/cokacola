@@ -29,6 +29,40 @@ var absduration;
 ~ui.highlistview = nil;
 ~ui.canvas = nil;
 
+~ui.calc_total_duration = { | self |
+	var enabled_entries = self.enabled.select({ | item, i| item.value });
+};
+
+~ui.miditoname = ({ arg self, note = 60;
+	var midi, notes;
+	midi = (note + 0.5).asInteger;
+	notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+	(notes[midi%12] ++ (midi.div(12)-1))
+});
+
+~ui.nametomidi = ({ arg self, name = "C4";
+	var twelves, ones, octaveIndex, midis;
+	midis = Dictionary[($c->0),($d->2),($e->4),($f->5),($g->7),($a->9),($b->11)];
+	ones = midis.at(name[0].toLower);
+	if( (name[1].isDecDigit),
+	{
+		octaveIndex = 1;
+	}, /*else*/
+	{
+		octaveIndex = 2;
+		if( (name[1] == $#) || (name[1].toLower == $s) || (name[1] == $+), {
+			ones = ones + 1;
+		},{
+			if( (name[1] == $b) || (name[1].toLower == $f) || (name[1] == $-), {
+				ones = ones - 1;
+			});
+		});
+	});
+	twelves = (name.copyRange(octaveIndex, name.size).asInteger) * 12;
+	(twelves + 12 + ones)
+});
+
+
 s.waitForBoot({
 	var width = 1900;
 	var height = 1000;
@@ -41,7 +75,7 @@ s.waitForBoot({
 
 	8.do({ |i|
 		var col = VLayout.new;
-		var cb = CheckBox.new(w, Rect(), "Enabled");
+		var cb = CheckBox.new(w, Rect(), "Enabled").action_({ ~ui.canvas.refresh; });
 
 		var volumelabel = StaticText(w, Rect()).string_("Volume").font_(Font("Helvetica-Bold", 18)).backColor_(Color.yellow);
 		var volumefrom = StaticText(w, Rect()).string_("from");
@@ -86,15 +120,15 @@ s.waitForBoot({
 			[instrumentlabel, instr, nil],
 		);
 
-		~ui.enabled.add(cb);
-		~ui.volume_from.add(volumestart);
-		~ui.volume_to.add(endvolume);
-		~ui.note_from.add(notestart);
-		~ui.note_to.add(noteend);
-		~ui.slide.add(slide);
-		~ui.steps.add(steps);
-		~ui.duration.add(duration);
-		~ui.instrument.add(instr);
+		~ui.enabled = ~ui.enabled.add(cb);
+		~ui.volume_from = ~ui.volume_from.add(volumestart);
+		~ui.volume_to = ~ui.volume_to.add(endvolume);
+		~ui.note_from = ~ui.note_from.add(notestart);
+		~ui.note_to = ~ui.note_to.add(noteend);
+		~ui.slide = ~ui.slide.add(slide);
+		~ui.steps = ~ui.steps.add(steps);
+		~ui.duration = ~ui.duration.add(duration);
+		~ui.instrument = ~ui.instrument.add(instr);
 
 		col.add(cb);
 		col.add(paramgrid);
@@ -165,9 +199,22 @@ s.waitForBoot({
 	row2.add(row2cols);
 	col0.add(row2);
 
+
+	~ui.canvas.drawFunc_({ |v|
+		var bounds = v.bounds;
+		var totalduration = ~ui.calc_total_duration(~ui);
+
+
+		Pen.fillColor = Color.black;
+		Pen.stroke;
+
+		w.refresh;
+	});
+
 	w.layout = col0;
 	w.front;
+
+
 });
 
 )
-

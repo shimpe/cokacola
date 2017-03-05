@@ -11,6 +11,7 @@ var absduration;
 ~slidecollection.make_slidekey = ({ |self, lowmidhigh, slideno |
 	(lowmidhigh ++ "_" ++ slideno).asString;
 });
+
 ~slidecollection.from_ui = ({ |self, ui, slidekey |
 	var columns = ();
 	no_of_cols.do({ | i |
@@ -29,6 +30,26 @@ var absduration;
 	columns.absduration = ui[\absduration].value;
 
 	self[slidekey.asSymbol] = columns;
+});
+
+~slidecollection.to_ui = ({ | self, ui, slidekey |
+	if ((self[slidekey.asSymbol].notNil),{
+		var columns = self[slidekey.asSymbol];
+		ui[\absduration].value_(columns.absduration);
+		no_of_cols.do({ | i |
+			ui[\columns][i].enabled.value_(columns[i.asSymbol].enabled);
+			ui[\columns][i].volume_from.value_(columns[i.asSymbol].volume_from);
+			ui[\columns][i].volume_to.value_(columns[i.asSymbol].volume_to);
+			ui[\columns][i].note_from.value_(columns[i.asSymbol].note_from);
+			ui[\columns][i].note_to.value_(columns[i.asSymbol].note_to);
+			ui[\columns][i].slide.value_(columns[i.asSymbol].slide);
+			ui[\columns][i].steps.value_(columns[i.asSymbol].steps);
+			ui[\columns][i].duration.value_(columns[i.asSymbol].duration);
+			ui[\columns][i].instrument.value_(columns[i.asSymbol].instrument);
+		});
+
+		~ui[\canvas].refresh;
+	});
 });
 
 ~sequence_model = (); // mapping from ( step idx ) => ( low/mid/high, slide index)
@@ -272,8 +293,11 @@ s.waitForBoot({
 	   .action_({
 		| sel |
 		var slide_number = sel.value;
+		var slidekey = ~ui[\get_active_slidekey].value(~ui);
 		~ui.midlistview.value_(0);
 		~ui.highlistview.value_(0);
+		~slidecollection[\to_ui].value(~slidecollection, ~ui, slidekey);
+
 	});
 	lowlistviewcol.add(lowlabel);
 	lowlistviewcol.add(~ui.lowlistview);
@@ -286,8 +310,10 @@ s.waitForBoot({
 	   .action_({
 		| sel |
 		var slide_number = sel.value;
+		var slidekey = ~ui[\get_active_slidekey].value(~ui);
 		~ui.lowlistview.value_(0);
 		~ui.highlistview.value_(0);
+		~slidecollection[\to_ui].value(~slidecollection, ~ui, slidekey);
 	});
 	midlistviewcol.add(midlabel);
 	midlistviewcol.add(~ui.midlistview);
@@ -300,8 +326,10 @@ s.waitForBoot({
 	   .action_({
 		| sel |
 		var slide_number = sel.value;
+		var slidekey = ~ui[\get_active_slidekey].value(~ui);
 		~ui.lowlistview.value_(0);
 		~ui.midlistview.value_(0);
+		~slidecollection[\to_ui].value(~slidecollection, ~ui, slidekey);
 	});
 	highlistviewcol.add(highlabel);
 	highlistviewcol.add(~ui.highlistview);

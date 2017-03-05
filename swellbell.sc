@@ -7,8 +7,34 @@ var canvascol,slidegrid;
 var absdurationlabel,lowlabel,midlabel,highlabel;
 var absduration;
 
+~slidecollection = (); // mapping from ( low/mid/high, slide index ) => slidemodel (column *values*: enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument)
+~slidecollection.make_slidekey = ({ |self, lowmidhigh, slideno |
+	(lowmidhigh ++ "_" ++ slideno).asString;
+});
+~slidecollection.from_ui = ({ |self, ui, slidekey |
+	var columns = ();
+	no_of_cols.do({ | i |
+		var columnvalues = ();
+		columnvalues.enabled = ui[\columns][i].enabled.value;
+		columnvalues.volume_from = ui[\columns][i].volume_from.value;
+		columnvalues.volume_to = ui[\columns][i].volume_to.value;
+		columnvalues.note_from = ui[\columns][i].note_from.value;
+		columnvalues.note_to = ui[\columns][i].note_to.value;
+		columnvalues.slide = ui[\columns][i].slide.value;
+		columnvalues.steps = ui[\columns][i].steps.value;
+		columnvalues.duration = ui[\columns][i].duration.value;
+		columnvalues.instrument = ui[\columns][i].instrument.value;
+		columns[i.asSymbol] = columnvalues;
+	});
+	columns.absduration = ui[\absduration].value;
+
+	self[slidekey.asSymbol] = columns;
+});
+
+~sequence_model = (); // mapping from ( step idx ) => ( low/mid/high, slide index)
+
 ~ui = ();
-~ui.columns = []; // enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument
+~ui.columns = []; // column *controls* enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument
 ~ui.absduration = nil;
 ~ui.loadbutton = nil;
 ~ui.playstepbutton = nil;
@@ -108,6 +134,28 @@ var absduration;
 
 });
 
+~ui.get_active_slidekey = ({ | self|
+	var lowmidhigh = "";
+	var slideno = 0;
+
+	if ((~ui.lowlistview.value != 0), {
+		lowmidhigh = "low";
+		slideno = ~ui.lowlistview.value;
+	}, /* else */
+	{
+		if ((~ui.midlistview.value != 0), {
+			lowmidhigh = "mid";
+			slideno = ~ui.midlistview.value;
+		}, /* else */
+		{
+			lowmidhigh = "high";
+			slideno = ~ui.highlistview.value;
+		});
+	});
+
+	~slidecollection[\make_slidekey].value(~slidecollection, lowmidhigh, slideno);
+});
+
 s.waitForBoot({
 	var width = 1900;
 	var height = 1000;
@@ -194,7 +242,13 @@ s.waitForBoot({
 	~ui.playstepbutton = Button.new(w, Rect()).string_("Play step").states_([["Play step",Color.black,Color.gray]]);
 	~ui.playandnextbutton = Button.new(w, Rect()).string_("Play&Next").states_([["Play&Next",Color.black,Color.gray]]);
 	~ui.playslidebutton = Button.new(w, Rect()).string_("Play slide").states_([["Play slide",Color.black,Color.gray]]);
-	~ui.registerslidebutton = Button.new(w, Rect()).string_("Register slide").states_([["Register slide",Color.black,Color.gray]]);
+	~ui.registerslidebutton = Button.new(w, Rect())
+	   .string_("Register slide")
+	   .states_([["Register slide",Color.black,Color.gray]])
+	   .action_({ | b |
+		~slidecollection[\from_ui].value(~slidecollection, ~ui, ~ui[\get_active_slidekey].value(~ui));
+		~slidecollection.postln;
+	});
 	~ui.registerstepbutton = Button.new(w, Rect()).string_("Register step").states_([["Register step",Color.black,Color.gray]]);
 	~ui.savebutton = Button.new(w, Rect()).string_("Save").states_([["Save",Color.black,Color.gray]]);
 	buttoncol.add(~ui.loadbutton);
@@ -211,19 +265,44 @@ s.waitForBoot({
 
 	lowlistviewcol = VLayout.new;
 	lowlabel = StaticText(w, Rect()).string_("low").font_(Font("Helvetica-Bold", 18)).backColor_(Color.gray.lighten(0.9)).align_(\center);
-	~ui.lowlistview = ListView(w, Rect()).items_(Array.fill(26, {|i| "slide "++i.asString}).put(0, "None"));
+
+	~ui.lowlistview = ListView(w, Rect())
+	   .items_(Array.fill(26, {|i| "slide "++i.asString})
+	   .put(0, "None"))
+	   .action_({
+		| sel |
+		var slide_number = sel.value;
+		~ui.midlistview.value_(0);
+		~ui.highlistview.value_(0);
+	});
 	lowlistviewcol.add(lowlabel);
 	lowlistviewcol.add(~ui.lowlistview);
 
 	midlistviewcol = VLayout.new;
 	midlabel = StaticText(w, Rect()).string_("mid").font_(Font("Helvetica-Bold", 18)).backColor_(Color.gray.lighten(0.9)).align_(\center);
-	~ui.midlistview = ListView(w, Rect()).items_(Array.fill(26, {|i| "slide "++i.asString}).put(0, "None"));
+	~ui.midlistview = ListView(w, Rect())
+	   .items_(Array.fill(26, {|i| "slide "++i.asString})
+	   .put(0, "None"))
+	   .action_({
+		| sel |
+		var slide_number = sel.value;
+		~ui.lowlistview.value_(0);
+		~ui.highlistview.value_(0);
+	});
 	midlistviewcol.add(midlabel);
 	midlistviewcol.add(~ui.midlistview);
 
 	highlistviewcol = VLayout.new;
 	highlabel = StaticText(w, Rect()).string_("high").font_(Font("Helvetica-Bold", 18)).backColor_(Color.gray.lighten(0.9)).align_(\center);
-	~ui.highlistview = ListView(w, Rect()).items_(Array.fill(26, {|i| "slide "++i.asString}).put(0, "None"));
+	~ui.highlistview = ListView(w, Rect())
+	   .items_(Array.fill(26, {|i| "slide "++i.asString})
+	   .put(0, "None"))
+	   .action_({
+		| sel |
+		var slide_number = sel.value;
+		~ui.lowlistview.value_(0);
+		~ui.midlistview.value_(0);
+	});
 	highlistviewcol.add(highlabel);
 	highlistviewcol.add(~ui.highlistview);
 
@@ -253,6 +332,7 @@ s.waitForBoot({
 		var totalduration = ~ui[\calc_total_duration].value(~ui, enabled_entries);
 		var highestnote = ~ui[\nametomidi].value(~ui, "B9"); // no autozoom in y
 		var lowestnote = ~ui[\nametomidi].value(~ui, "C0");  // no autozoom in y
+
         //var highestnote = ~ui[\calc_highest_midi_note].value(~ui, enabled_entries);   // use these lines to autozoom in y
 		//var lowestnote = ~ui[\calc_lowest_midi_note].value(~ui, enabled_entries);     // use these lines to autozoom in y
 
@@ -332,7 +412,6 @@ s.waitForBoot({
 
 			inc_duration = inc_duration + item.duration.value.asFloat;
 		});
-
 
 		w.refresh;
 	});

@@ -309,7 +309,7 @@ s.waitForBoot({
 	var width = 1900;
 	var height = 1000;
 
-	SynthDef(\bellish, {|out=0, pan=0, freqstart=440, freqend=880, amp=0.1, dur=2|
+	SynthDef(\hellsbells, {|out=0, pan=0, freqstart=440, freqend=880, amp=0.1, dur=2|
 		var t = [1, 3.2, 6.23, 6.27, 9.92, 14.15]; // partials
 		var a = amp*t.collect({ |i,idx| 1*(0.99*idx) }); // amplitude per partial
 		var u = t.inject([],
@@ -376,7 +376,7 @@ s.waitForBoot({
 		var durationunit = StaticText(w, Rect()).string_("sec");
 
 		var instrumentlabel= StaticText(w, Rect()).string_("Instr.").font_(Font("Helvetica-Bold", 18)).backColor_(Color.magenta.lighten(0.7));
-		var instr = PopUpMenu(w).items_(["HellsBells"]);
+		var instr = PopUpMenu(w).items_(["hellsbells"]);
 
 		var paramgrid = GridLayout.rows(
 			[volumelabel, nil, nil],
@@ -555,7 +555,7 @@ s.waitForBoot({
 			var fromstring = (item.note_from.value.asString++";"++item.volume_from.value.asString++"dB");
 			var tostring = (item.note_to.value.asString++";"++item.volume_to.value.asString++"dB");
 			var tostring_width = tostring.bounds(Font("Courier",20)).width;
-			var steps_string = (item.steps.value.asString);
+			var steps_string = (item.steps.value.asString ++ " steps;" ++ item.duration.value.asString ++ " dur");
 
 			if ((beginvolume < endvolume),{
 				if (((fromnote != 0) && (tonote != 0)), {

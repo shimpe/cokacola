@@ -6,6 +6,9 @@ var row2cols,buttoncol,lowlistviewcol,midlistviewcol,highlistviewcol;
 var canvascol,slidegrid;
 var absdurationlabel,lowlabel,midlabel,highlabel;
 var absduration;
+var arr_helper1, arr_helper2;
+
+~active_slide_button = 0;
 
 ~slidecollection = (); // mapping from ( low/mid/high, slide index ) => slidemodel (column *values*: enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument)
 ~slidecollection.data = ();
@@ -54,10 +57,12 @@ var absduration;
 	});
 });
 
-~sequence_model = (); // mapping from ( step idx ) => ( low/mid/high, slide index)
+~sequencemodel = (); // mapping from ( step idx ) => ( low/mid/high, slide index)
+~sequencemodel.data = ();
 
 ~ui = ();
 ~ui.columns = []; // column *controls* enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument
+~ui.slidebuttons = []; // 0-49
 ~ui.absduration = nil;
 ~ui.loadbutton = nil;
 ~ui.playstepbutton = nil;
@@ -153,26 +158,39 @@ var absduration;
 	note.linlin(min_note, max_note, (canvasheight-(2*margin)), 0) + margin;
 });
 
-~ui.on_slide_button = ({ | self, button, idx |
+~ui.on_slide_button = ({ | self, idx |
+	self[\slidebuttons].do({
+		| item, i |
+		if ((i != idx), {
+			item.value_(0);
+		}, /* else */
+		{
+			item.value_(1);
+			~active_slide_button = idx;
+		});
+	});
+});
 
+~ui.on_register_active_step_button = ({ |self, slidecollection, sequencemodel |
+	sequencemodel[\data][~active_slide_button.asSymbol] = self[\get_active_slidekey].value(self, slidecollection);
 });
 
 ~ui.get_active_slidekey = ({ | self, slidecollection |
 	var lowmidhigh = "";
 	var slideno = 0;
 
-	if ((~ui.lowlistview.value != 0), {
+	if ((self.lowlistview.value != 0), {
 		lowmidhigh = "low";
-		slideno = ~ui.lowlistview.value;
+		slideno = self.lowlistview.value;
 	}, /* else */
 	{
-		if ((~ui.midlistview.value != 0), {
+		if ((self.midlistview.value != 0), {
 			lowmidhigh = "mid";
-			slideno = ~ui.midlistview.value;
+			slideno = self.midlistview.value;
 		}, /* else */
 		{
 			lowmidhigh = "high";
-			slideno = ~ui.highlistview.value;
+			slideno = self.highlistview.value;
 		});
 	});
 
@@ -180,7 +198,7 @@ var absduration;
 });
 
 ~ui.update_listview_colors = ({| self, slidecollection |
-	~ui.lowlistview.colors_({
+	self.lowlistview.colors_({
 		Array.fill(26, {|i|
 			var slidekey = slidecollection[\make_slidekey].value(slidecollection, "low", i);
 			if ((slidecollection[\data][slidekey.asSymbol].notNil), {
@@ -192,7 +210,7 @@ var absduration;
 
 		});
 	}.value);
-	~ui.midlistview.colors_({
+	self.midlistview.colors_({
 		Array.fill(26, {|i|
 			var slidekey = slidecollection[\make_slidekey].value(slidecollection, "mid", i);
 			if ((slidecollection[\data][slidekey.asSymbol].notNil), {
@@ -204,7 +222,7 @@ var absduration;
 
 		});
 	}.value);
-	~ui.highlistview.colors_({
+	self.highlistview.colors_({
 		Array.fill(26, {|i|
 			var slidekey = slidecollection[\make_slidekey].value(slidecollection, "high", i);
 			if ((slidecollection[\data][slidekey.asSymbol].notNil), {
@@ -311,7 +329,7 @@ s.waitForBoot({
 		~slidecollection[\from_ui].value(~slidecollection, ~ui, ~ui[\get_active_slidekey].value(~ui, ~slidecollection));
 		~ui[\update_listview_colors].value(~ui, ~slidecollection);
 	});
-	~ui.registerstepbutton = Button.new(w, Rect()).string_("Register step").states_([["Register step",Color.black,Color.gray]]);
+	~ui.registerstepbutton = Button.new(w, Rect()).string_("Register step").states_([["Register step",Color.black,Color.gray]]).action_({~ui[\on_register_active_step_button].value(~ui, ~slidecollection, ~sequencemodel)});
 	~ui.savebutton = Button.new(w, Rect()).string_("Save").states_([["Save",Color.black,Color.gray]]);
 	buttoncol.add(~ui.loadbutton);
 	buttoncol.add(absdurationlabel);
@@ -339,7 +357,6 @@ s.waitForBoot({
 		~ui.highlistview.value_(0);
 		slidekey = ~ui[\get_active_slidekey].value(~ui, ~slidecollection);
 		~slidecollection[\to_ui].value(~slidecollection, ~ui, slidekey);
-
 	});
 	lowlistviewcol.add(lowlabel);
 	lowlistviewcol.add(~ui.lowlistview);
@@ -380,9 +397,14 @@ s.waitForBoot({
 
 	canvascol = VLayout.new;
 	~ui.canvas = UserView(w,Rect()).background_(Color.white).minSize = 1400@500;
-	slidegrid = GridLayout.rows(
-		Array.fill(25,{|i| Button.new(w,Rect()).maxSize_(50@20).string_({(i+1).asString}.value).states_([[{(i+1).asString}.value,Color.black,Color.white],[{(i+1).asString}.value,Color.black,Color.blue.lighten(0.5)]]).action_({ |button| ~ui[\on_slide_button].value(~ui, button, (i+1)); }); }),
-		Array.fill(25,{|i| Button.new(w,Rect()).maxSize_(50@20).string_({(i+26).asString}.value) .states_([[{(i+26).asString}.value,Color.black,Color.white],[{(i+26).asString}.value,Color.black,Color.blue.lighten(0.5)]]).action_({| button | ~ui[\on_slide_button].value(~ui, button, i+26)}); }));
+
+	arr_helper1 = Array.fill(25,{|i| Button.new(w,Rect()).maxSize_(50@20).string_({(i+1).asString}.value).states_([[{(i+1).asString}.value,Color.black,Color.white],[{(i+1).asString}.value,Color.black,Color.blue.lighten(0.5)]]).action_({ |button| ~ui[\on_slide_button].value(~ui, i); }); });
+	~ui[\slidebuttons] = [];
+	~ui[\slidebuttons] = ~ui[\slidebuttons].addAll(arr_helper1);
+	arr_helper2 = Array.fill(25,{|i| Button.new(w,Rect()).maxSize_(50@20).string_({(i+26).asString}.value) .states_([[{(i+26).asString}.value,Color.black,Color.white],[{(i+26).asString}.value,Color.black,Color.blue.lighten(0.5)]]).action_({| button | ~ui[\on_slide_button].value(~ui, i+25)}); });
+	~ui[\slidebuttons] = ~ui[\slidebuttons].addAll(arr_helper2);
+	arr_helper1[0].valueAction_(1);
+	slidegrid = GridLayout.rows(arr_helper1, arr_helper2);
 	canvascol.add(~ui.canvas);
 	canvascol.add(slidegrid);
 
@@ -493,4 +515,3 @@ s.waitForBoot({
 });
 
 )
-

@@ -333,10 +333,11 @@ s.waitForBoot({
 	   .put(0, "None"))
 	   .action_({
 		| sel |
+		var slidekey;
 		var slide_number = sel.value;
-		var slidekey = ~ui[\get_active_slidekey].value(~ui, ~slidecollection);
 		~ui.midlistview.value_(0);
 		~ui.highlistview.value_(0);
+		slidekey = ~ui[\get_active_slidekey].value(~ui, ~slidecollection);
 		~slidecollection[\to_ui].value(~slidecollection, ~ui, slidekey);
 
 	});
@@ -350,10 +351,11 @@ s.waitForBoot({
 	   .put(0, "None"))
 	   .action_({
 		| sel |
+		var slidekey;
 		var slide_number = sel.value;
-		var slidekey = ~ui[\get_active_slidekey].value(~ui, ~slidecollection);
 		~ui.lowlistview.value_(0);
 		~ui.highlistview.value_(0);
+		slidekey = ~ui[\get_active_slidekey].value(~ui, ~slidecollection);
 		~slidecollection[\to_ui].value(~slidecollection, ~ui, slidekey);
 	});
 	midlistviewcol.add(midlabel);
@@ -366,10 +368,11 @@ s.waitForBoot({
 	   .put(0, "None"))
 	   .action_({
 		| sel |
+		var slidekey;
 		var slide_number = sel.value;
-		var slidekey = ~ui[\get_active_slidekey].value(~ui, ~slidecollection);
 		~ui.lowlistview.value_(0);
 		~ui.midlistview.value_(0);
+		slidekey = ~ui[\get_active_slidekey].value(~ui, ~slidecollection);
 		~slidecollection[\to_ui].value(~slidecollection, ~ui, slidekey);
 	});
 	highlistviewcol.add(highlabel);
@@ -490,3 +493,4 @@ s.waitForBoot({
 });
 
 )
+

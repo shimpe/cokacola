@@ -1,5 +1,6 @@
 (
-var w;
+// CoKa CoLa - COntemporary KAgel COmposition LAb
+var o = Server.local.options;
 var no_of_cols = 8;
 var col0;
 var row1, row2;
@@ -8,6 +9,8 @@ var canvascol,slidegrid;
 var absdurationlabel,lowlabel,midlabel,highlabel;
 var absduration;
 var arr_helper1, arr_helper2;
+
+o.memSize = 8192*30;
 
 ~active_slide_button = 0;
 
@@ -305,6 +308,35 @@ var arr_helper1, arr_helper2;
 s.waitForBoot({
 	var width = 1900;
 	var height = 1000;
+
+	SynthDef(\bellish, {|out=0, pan=0, freqstart=440, freqend=880, amp=0.1, dur=2|
+		var t = [1, 3.2, 6.23, 6.27, 9.92, 14.15]; // partials
+		var a = amp*t.collect({ |i,idx| 1*(0.99*idx) }); // amplitude per partial
+		var u = t.inject([],
+			{   | collection_so_far, newelement |
+				var csize = collection_so_far.size;
+				var temp = [];
+				(csize+3).do({
+					|item, idx|
+					temp = temp ++ [newelement + idx - ((csize+2)/2)];
+				});
+				collection_so_far = collection_so_far ++ temp;
+		});
+		var v = a.inject([],
+			{   | collection_so_far, newelement |
+				var csize = collection_so_far.size;
+				var temp = [];
+				(csize+3).do({
+					|item, idx|
+					temp = temp ++ [ 0.95**((idx - ((csize+2)/2)).abs)];
+				});
+				collection_so_far = collection_so_far ++ temp;
+		});
+		var signal = (10*amp/u.size)*EnvGen.kr(Env.perc(0.1,1,1), doneAction:Done.freeSelf)*DynKlank.ar(`[u*XLine.kr(freqstart, freqend, dur), v, v], BrownNoise.ar([0.007,0.007]));
+		Out.ar(out, Pan2.ar(signal));
+	}).add;
+
+	s.sync;
 
 	w = Window(bounds: Rect(0, 0, width, height));
 

@@ -86,7 +86,9 @@ var arr_helper1, arr_helper2;
 ~ui.playandnextbutton = nil;
 ~ui.playslidebutton = nil;
 ~ui.registerslidebutton = nil;
+~ui.unregisterslidebutton = nil;
 ~ui.registerstepbutton = nil;
+~ui.unregisterstepbutton = nil;
 ~ui.savebutton = nil;
 ~ui.lowlistview = nil;
 ~ui.midlistview = nil;
@@ -196,6 +198,10 @@ var arr_helper1, arr_helper2;
 
 ~ui.on_register_active_step_button = ({ |self, slidecollection, sequencemodel |
 	sequencemodel[\data][~active_slide_button.asSymbol] = self[\get_active_slidekey].value(self, slidecollection);
+});
+
+~ui.on_unregister_active_step_button = ({ |self, slidecollection, sequencemodel |
+	~sequencemodel[\data].removeAt(~active_slide_button.asSymbol);
 });
 
 ~ui.update_for_selected_step = ({ | self, idx, sequencemodel, slidecollection |
@@ -384,12 +390,21 @@ s.waitForBoot({
 	~ui.playslidebutton = Button.new(w, Rect()).string_("Play slide").states_([["Play slide",Color.black,Color.gray]]);
 	~ui.registerslidebutton = Button.new(w, Rect())
 	   .string_("Register slide")
-	   .states_([["Register slide",Color.black,Color.gray]])
+	   .states_([["Register slide",Color.black,Color.green]])
 	   .action_({ | b |
 		~slidecollection[\from_ui].value(~slidecollection, ~ui, ~ui[\get_active_slidekey].value(~ui, ~slidecollection));
 		~ui[\update_listview_colors].value(~ui, ~slidecollection);
 	});
-	~ui.registerstepbutton = Button.new(w, Rect()).string_("Register step").states_([["Register step",Color.black,Color.gray]]).action_({~ui[\on_register_active_step_button].value(~ui, ~slidecollection, ~sequencemodel)});
+	~ui.unregisterslidebutton = Button.new(w, Rect())
+	   .string_("Unregister slide")
+	   .states_([["Unregister slide",Color.black,Color.red]])
+	   .action_({ | b |
+		~slidecollection[\data].removeAt(~ui[\get_active_slidekey].value(~ui, ~slidecollection).asSymbol);
+		~ui[\update_listview_colors].value(~ui, ~slidecollection);
+	});
+	~ui.registerstepbutton = Button.new(w, Rect()).string_("Register step").states_([["Register step",Color.black,Color.green]]).action_({~ui[\on_register_active_step_button].value(~ui, ~slidecollection, ~sequencemodel)});
+	~ui.unregisterstepbutton = Button.new(w, Rect()).string_("Unregister step").states_([["Unregister step",Color.black,Color.red]]).action_({~ui[\on_unregister_active_step_button].value(~ui, ~slidecollection, ~sequencemodel)});
+
 	~ui.savebutton = Button.new(w, Rect()).string_("Save").states_([["Save",Color.black,Color.gray]]).action_({ ~ui[\on_save].value(~ui, ~slidecollection, ~sequencemodel); });
 	buttoncol.add(~ui.loadbutton);
 	buttoncol.add(absdurationlabel);
@@ -400,7 +415,9 @@ s.waitForBoot({
 	buttoncol.add(nil);
 	buttoncol.add(~ui.playslidebutton);
 	buttoncol.add(~ui.registerslidebutton);
+	buttoncol.add(~ui.unregisterslidebutton);
 	buttoncol.add(~ui.registerstepbutton);
+	buttoncol.add(~ui.unregisterstepbutton);
 	buttoncol.add(~ui.savebutton);
 
 	lowlistviewcol = VLayout.new;

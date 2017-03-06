@@ -8,6 +8,7 @@ var absdurationlabel,lowlabel,midlabel,highlabel;
 var absduration;
 
 ~slidecollection = (); // mapping from ( low/mid/high, slide index ) => slidemodel (column *values*: enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument)
+~slidecollection.data = ();
 
 ~slidecollection.make_slidekey = ({ |self, lowmidhigh, slideno |
 	(lowmidhigh ++ "_" ++ slideno).asString;
@@ -30,12 +31,12 @@ var absduration;
 	});
 	columns.absduration = ui[\absduration].value;
 
-	self[slidekey.asSymbol] = columns;
+	self[\data][slidekey.asSymbol] = columns;
 });
 
 ~slidecollection.to_ui = ({ | self, ui, slidekey |
-	if ((self[slidekey.asSymbol].notNil),{
-		var columns = self[slidekey.asSymbol];
+	if ((self[\data][slidekey.asSymbol].notNil),{
+		var columns = self[\data][slidekey.asSymbol];
 		ui[\absduration].value_(columns.absduration);
 		no_of_cols.do({ | i |
 			ui[\columns][i].enabled.value_(columns[i.asSymbol].enabled);
@@ -182,8 +183,7 @@ var absduration;
 	~ui.lowlistview.colors_({
 		Array.fill(26, {|i|
 			var slidekey = slidecollection[\make_slidekey].value(slidecollection, "low", i);
-			i.postln;
-			if ((slidecollection[slidekey.asSymbol].notNil), {
+			if ((slidecollection[\data][slidekey.asSymbol].notNil), {
 				Color.green;
 			}, /* else */
 			{
@@ -195,7 +195,7 @@ var absduration;
 	~ui.midlistview.colors_({
 		Array.fill(26, {|i|
 			var slidekey = slidecollection[\make_slidekey].value(slidecollection, "mid", i);
-			if ((slidecollection[slidekey.asSymbol].notNil), {
+			if ((slidecollection[\data][slidekey.asSymbol].notNil), {
 				Color.green;
 			}, /* else */
 			{
@@ -207,7 +207,7 @@ var absduration;
 	~ui.highlistview.colors_({
 		Array.fill(26, {|i|
 			var slidekey = slidecollection[\make_slidekey].value(slidecollection, "high", i);
-			if ((slidecollection[slidekey.asSymbol].notNil), {
+			if ((slidecollection[\data][slidekey.asSymbol].notNil), {
 				Color.green;
 			}, /* else */
 			{

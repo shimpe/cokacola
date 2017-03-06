@@ -1,4 +1,5 @@
 (
+var w;
 var no_of_cols = 8;
 var col0;
 var row1, row2;
@@ -62,11 +63,18 @@ var arr_helper1, arr_helper2;
 	d.writeArchive(Document.current.dir +/+ name);
 });
 
+~slidecollection.on_load = ({ |self, name |
+	~slidecollection.data = Object.readArchive(Document.current.dir +/+ name);
+});
+
 ~sequencemodel = (); // mapping from ( step idx ) => ( low/mid/high, slide index)
 ~sequencemodel.data = ();
 ~sequencemodel.on_save = ({ |self, name |
 	var d = self[\data];
 	d.writeArchive(Document.current.dir +/+ name);
+});
+~sequencemodel.on_load = ({ | self, name|
+	~sequencemodel.data = Object.readArchive(Document.current.dir +/+ name);
 });
 
 ~ui = ();
@@ -279,6 +287,15 @@ var arr_helper1, arr_helper2;
 	var b = sequencemodel[\on_save].value(~sequencemodel, "seq_def.scpreset");
 });
 
+~ui.on_load = ({ | self, slidecollection, sequencemodel |
+	~slidecollection = slidecollection[\on_load].value(~slidecollection, "slide_def.scpreset");
+	~sequencemodel = sequencemodel[\on_load].value(~sequencemodel, "seq_def.scpreset");
+	slidecollection[\to_ui].value(slidecollection, "low_0");
+	self[\set_active_slidekey].value(self, "low_0");
+	self[\update_listview_colors].value(self, slidecollection);
+	self[\on_slide_button].value(self, 0, ~sequencemodel, ~slidecollection);
+});
+
 s.waitForBoot({
 	var width = 1900;
 	var height = 1000;
@@ -359,7 +376,7 @@ s.waitForBoot({
 	row2cols = HLayout.new;
 
 	buttoncol = VLayout.new;
-	~ui.loadbutton = Button.new(w, Rect()).string_("Load").states_([["Load",Color.black,Color.gray]]);
+	~ui.loadbutton = Button.new(w, Rect()).string_("Load").states_([["Load",Color.black,Color.gray]]).action_({ ~ui[\on_load].value(~ui, ~slidecollection, ~sequencemodel)});
 	absdurationlabel = StaticText(w, Rect()).string_("Abs. Dur. (sec)");
 	~ui.absduration = TextField(w, Rect()).string_("10");
 	~ui.playstepbutton = Button.new(w, Rect()).string_("Play step").states_([["Play step",Color.black,Color.gray]]);

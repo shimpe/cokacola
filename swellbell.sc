@@ -57,8 +57,17 @@ var arr_helper1, arr_helper2;
 	});
 });
 
+~slidecollection.on_save = ({ | self, name |
+	var d = self[\data];
+	d.writeArchive(Document.current.dir +/+ name);
+});
+
 ~sequencemodel = (); // mapping from ( step idx ) => ( low/mid/high, slide index)
 ~sequencemodel.data = ();
+~sequencemodel.on_save = ({ |self, name |
+	var d = self[\data];
+	d.writeArchive(Document.current.dir +/+ name);
+});
 
 ~ui = ();
 ~ui.columns = []; // column *controls* enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument
@@ -265,6 +274,11 @@ var arr_helper1, arr_helper2;
 	}.value);
 });
 
+~ui.on_save = ({ | self, slidecollection, sequencemodel |
+	var a = slidecollection[\on_save].value(~slidecollection, "slide_def.scpreset");
+	var b = sequencemodel[\on_save].value(~sequencemodel, "seq_def.scpreset");
+});
+
 s.waitForBoot({
 	var width = 1900;
 	var height = 1000;
@@ -359,7 +373,7 @@ s.waitForBoot({
 		~ui[\update_listview_colors].value(~ui, ~slidecollection);
 	});
 	~ui.registerstepbutton = Button.new(w, Rect()).string_("Register step").states_([["Register step",Color.black,Color.gray]]).action_({~ui[\on_register_active_step_button].value(~ui, ~slidecollection, ~sequencemodel)});
-	~ui.savebutton = Button.new(w, Rect()).string_("Save").states_([["Save",Color.black,Color.gray]]);
+	~ui.savebutton = Button.new(w, Rect()).string_("Save").states_([["Save",Color.black,Color.gray]]).action_({ ~ui[\on_save].value(~ui, ~slidecollection, ~sequencemodel); });
 	buttoncol.add(~ui.loadbutton);
 	buttoncol.add(absdurationlabel);
 	buttoncol.add(~ui.absduration);

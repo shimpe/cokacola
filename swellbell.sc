@@ -1,6 +1,7 @@
 (
 // CoKa CoLa - COntemporary KAgel COmposition LAb
 var o = Server.local.options;
+var supported_instruments = ["hellsbells"];
 var no_of_cols = 8;
 var col0;
 var row1, row2;
@@ -9,11 +10,11 @@ var canvascol,slidegrid;
 var absdurationlabel,lowlabel,midlabel,highlabel;
 var absduration;
 var arr_helper1, arr_helper2;
+var current_columns_for_pattern = ();
 
 o.memSize = 8192*30;
 
 ~active_slide_button = 0;
-
 ~slidecollection = (); // mapping from ( low/mid/high, slide index ) => slidemodel (column *values*: enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument)
 ~slidecollection.data = ();
 
@@ -305,6 +306,48 @@ o.memSize = 8192*30;
 	self[\on_slide_button].value(self, 0, ~sequencemodel, ~slidecollection);
 });
 
+~ui.on_play_slide = ({| self |
+	var enabled_entries= ~ui[\calc_enabled_entries].value(~ui);
+	var total_duration = ~ui[\calc_total_duration].value(~ui, enabled_entries);
+	var enabledkeys = [];
+	no_of_cols.do({ | i |
+		var instrname = supported_instruments[~ui[\columns][i].instrument.value];
+		var f1a = (~ui[\nametomidi].value(~ui, ~ui[\columns][i].note_from.value));
+		var f1b = (~ui[\nametomidi].value(~ui, ~ui[\columns][i].note_to.value));
+		var steps = ~ui[\columns][i].steps.value.asFloat - 1;
+		var f1atob = series(f1a, (f1a+((f1b-f1a)/steps)), f1b).midicps;
+		var f1atobsize = f1atob.size;
+		var f2a = f1a+(~ui[\columns][i].slide.value.asFloat);
+		var f2b = f1b+(~ui[\columns][i].slide.value.asFloat);
+		var f2atob = series(f2a, (f2a+((f2b-f2a)/steps)), f2b).midicps;
+		var vola = ~ui[\columns][i].volume_from.value.asFloat.dbamp;
+		var volb = ~ui[\columns][i].volume_to.value.asFloat.dbamp;
+		var tspan = ((~ui[\columns][i].duration.value.asFloat)/total_duration)*(~ui[\absduration].value.asFloat);
+		var dur = tspan/f1atobsize;
+
+		if ((~ui[\columns][i].enabled.value),{
+			Pdef(("p"++i).asSymbol).quant = 0;
+			Pdef(("p"++i).asSymbol).fadeTime = 0.5;
+			Pdef(("p"++i).asSymbol,
+				Pbind(
+					\instrument, instrname.asSymbol,
+					\freqstart, Pseq(f1atob, inf),
+					\freqend, Pseq(f2atob, inf),
+					\startvol, Pseq([vola], inf),
+					\endvol, Pseq([volb], inf),
+					\timespan, Pseq([tspan], inf),
+					\amp, Pseries(vola, ((volb - vola)/f1atobsize), f1atobsize),
+				    \dur, Pseq([dur], inf)
+				);
+			);
+			enabledkeys = enabledkeys.add(("p"++i).asSymbol);
+		});
+	});
+
+	Pdef(\masterpattern, Psym(Pseq(enabledkeys, 1))).play;
+
+});
+
 s.waitForBoot({
 	var width = 1900;
 	var height = 1000;
@@ -332,6 +375,7 @@ s.waitForBoot({
 				});
 				collection_so_far = collection_so_far ++ temp;
 		});
+
 		var signal = (10*amp/u.size)*EnvGen.kr(Env.perc(0.1,1,1), doneAction:Done.freeSelf)*DynKlank.ar(`[u*XLine.kr(freqstart, freqend, dur), v, v], BrownNoise.ar([0.007,0.007]));
 		Out.ar(out, Pan2.ar(signal));
 	}).add;
@@ -376,7 +420,7 @@ s.waitForBoot({
 		var durationunit = StaticText(w, Rect()).string_("sec");
 
 		var instrumentlabel= StaticText(w, Rect()).string_("Instr.").font_(Font("Helvetica-Bold", 18)).backColor_(Color.magenta.lighten(0.7));
-		var instr = PopUpMenu(w).items_(["hellsbells"]);
+		var instr = PopUpMenu(w).items_(supported_instruments);
 
 		var paramgrid = GridLayout.rows(
 			[volumelabel, nil, nil],
@@ -419,7 +463,7 @@ s.waitForBoot({
 	~ui.absduration = TextField(w, Rect()).string_("10");
 	~ui.playstepbutton = Button.new(w, Rect()).string_("Play step").states_([["Play step",Color.black,Color.gray]]);
 	~ui.playandnextbutton = Button.new(w, Rect()).string_("Play&Next").states_([["Play&Next",Color.black,Color.gray]]);
-	~ui.playslidebutton = Button.new(w, Rect()).string_("Play slide").states_([["Play slide",Color.black,Color.gray]]);
+	~ui.playslidebutton = Button.new(w, Rect()).string_("Play slide").states_([["Play slide",Color.black,Color.gray]]).action_({ ~ui[\on_play_slide].value(~ui); });
 	~ui.registerslidebutton = Button.new(w, Rect())
 	   .string_("Register slide")
 	   .states_([["Register slide",Color.black,Color.green]])
@@ -624,3 +668,6 @@ s.waitForBoot({
 });
 
 )
+
+
+series(13, (13+((20-13)/4)), 20);

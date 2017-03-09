@@ -14,7 +14,7 @@ var current_columns_for_pattern = ();
 
 o.memSize = 8192*30;
 
-~active_slide_button = 0;
+~active_step_button = 0;
 ~slidecollection = (); // mapping from ( low/mid/high, slide index ) => slidemodel (column *values*: enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument)
 ~slidecollection.data = ();
 
@@ -83,7 +83,7 @@ o.memSize = 8192*30;
 
 ~ui = ();
 ~ui.columns = []; // column *controls* enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument
-~ui.slidebuttons = []; // 0-49
+~ui.stepbuttons = []; // 0-49
 ~ui.absduration = nil;
 ~ui.loadbutton = nil;
 ~ui.playstepbutton = nil;
@@ -175,7 +175,7 @@ o.memSize = 8192*30;
 });
 
 ~ui.on_slide_button = ({ | self, idx, sequencemodel, slidecollection |
-	self[\slidebuttons].do({
+	self[\stepbuttons].do({
 		| item, i |
 		if ((i != idx), {
 			if ((sequencemodel[\data][i.asSymbol].notNil), {
@@ -187,23 +187,23 @@ o.memSize = 8192*30;
 		}, /* else */
 		{
 			item.value_(1);
-			~active_slide_button = idx;
+			~active_step_button = idx;
 			self[\update_for_selected_step].value(self, idx, sequencemodel, slidecollection)
 		});
 	});
 });
 
 ~ui.on_register_active_step_button = ({ |self, slidecollection, sequencemodel |
-	sequencemodel[\data][~active_slide_button.asSymbol] = self[\get_active_slidekey].value(self, slidecollection);
+	sequencemodel[\data][~active_step_button.asSymbol] = self[\get_active_slidekey].value(self, slidecollection);
 });
 
 ~ui.on_unregister_active_step_button = ({ |self, slidecollection, sequencemodel |
-	~sequencemodel[\data].removeAt(~active_slide_button.asSymbol);
+	~sequencemodel[\data].removeAt(~active_step_button.asSymbol);
 });
 
 ~ui.update_for_selected_step = ({ | self, idx, sequencemodel, slidecollection |
-	if ((sequencemodel[\data][~active_slide_button.asSymbol].notNil), {
-		self[\set_active_slidekey].value(self, sequencemodel[\data][~active_slide_button.asSymbol]);
+	if ((sequencemodel[\data][~active_step_button.asSymbol].notNil), {
+		self[\set_active_slidekey].value(self, sequencemodel[\data][~active_step_button.asSymbol]);
 	});
 });
 
@@ -584,10 +584,10 @@ s.waitForBoot({
 	~ui.canvas = UserView(w,Rect()).background_(Color.white).minSize = 1400@500;
 
 	arr_helper1 = Array.fill(25,{|i| Button.new(w,Rect()).maxSize_(50@20).string_({(i+1).asString}.value).states_([[{(i+1).asString}.value,Color.black,Color.white],[{(i+1).asString}.value,Color.black,Color.blue.lighten(0.5)],[{(i+1).asString}.value,Color.black,Color.green.lighten(0.5)]]).action_({ |button| ~ui[\on_slide_button].value(~ui, i, ~sequencemodel, ~slidecollection); }); });
-	~ui[\slidebuttons] = [];
-	~ui[\slidebuttons] = ~ui[\slidebuttons].addAll(arr_helper1);
+	~ui[\stepbuttons] = [];
+	~ui[\stepbuttons] = ~ui[\stepbuttons].addAll(arr_helper1);
 	arr_helper2 = Array.fill(25,{|i| Button.new(w,Rect()).maxSize_(50@20).string_({(i+26).asString}.value) .states_([[{(i+26).asString}.value,Color.black,Color.white],[{(i+26).asString}.value,Color.black,Color.blue.lighten(0.5)],[{(i+1).asString}.value,Color.black,Color.green.lighten(0.5)]]).action_({| button | ~ui[\on_slide_button].value(~ui, i+25, ~sequencemodel, ~slidecollection)}); });
-	~ui[\slidebuttons] = ~ui[\slidebuttons].addAll(arr_helper2);
+	~ui[\stepbuttons] = ~ui[\stepbuttons].addAll(arr_helper2);
 	arr_helper1[0].valueAction_(1);
 	slidegrid = GridLayout.rows(arr_helper1, arr_helper2);
 	canvascol.add(~ui.canvas);

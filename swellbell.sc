@@ -144,29 +144,22 @@ o.memSize = 8192*30;
 
 ~ui.nametomidi = ({ | self, name |
 	var twelves, ones, octaveIndex, midis;
-	if ((name.isNil or: name == "0"),
-	{
+	if ((name.isNil or: name == "0"),{
 		0;
-	}, /*else*/
-	{
+	}, /*else*/{
 		midis = Dictionary[($c->0),($d->2),($e->4),($f->5),($g->7),($a->9),($b->11)];
 		ones = midis.at(name[0].toLower);
-		if( (name[1].isDecDigit),
-			{
-				octaveIndex = 1;
-			}, /*else*/
-			{
-				octaveIndex = 2;
-				if( (name[1] == $#) || (name[1].toLower == $s) || (name[1] == $+),
-					{
-						ones = ones + 1;
-					}, /*else*/
-					{
-						if( (name[1] == $b) || (name[1].toLower == $f) || (name[1] == $-),
-							{
-								ones = ones - 1;
-						});
+		if( (name[1].isDecDigit),{
+			octaveIndex = 1;
+		}, /*else*/{
+			octaveIndex = 2;
+			if( (name[1] == $#) || (name[1].toLower == $s) || (name[1] == $+),{
+				ones = ones + 1;
+			}, /*else*/{
+				if( (name[1] == $b) || (name[1].toLower == $f) || (name[1] == $-),{
+					ones = ones - 1;
 				});
+			});
 		});
 		twelves = (name.copyRange(octaveIndex, name.size).asInteger) * 12;
 		(twelves + 12 + ones)
@@ -242,12 +235,10 @@ o.memSize = 8192*30;
 	var number = splitted[1].asInteger;
 	if ((lowmidhigh == "low"), {
 		self.lowlistview.valueAction_(number);
-	}, /* else */
-	{
+	}, /* else */{
 		if ((lowmidhigh == "mid"), {
 			self.midlistview.valueAction_(number);
-		}, /* else */
-		{
+		}, /* else */{
 			self.highlistview.valueAction_(number);
 		});
 	});
@@ -311,40 +302,81 @@ o.memSize = 8192*30;
 	var total_duration = ~ui[\calc_total_duration].value(~ui, enabled_entries);
 	var enabledkeys = [];
 	no_of_cols.do({ | i |
-		var instrname = supported_instruments[~ui[\columns][i].instrument.value];
-		var f1a = (~ui[\nametomidi].value(~ui, ~ui[\columns][i].note_from.value));
-		var f1b = (~ui[\nametomidi].value(~ui, ~ui[\columns][i].note_to.value));
-		var steps = ~ui[\columns][i].steps.value.asFloat - 1;
-		var f1atob = series(f1a, (f1a+((f1b-f1a)/steps)), f1b).midicps;
-		var f1atobsize = f1atob.size;
-		var f2a = f1a+(~ui[\columns][i].slide.value.asFloat);
-		var f2b = f1b+(~ui[\columns][i].slide.value.asFloat);
-		var f2atob = series(f2a, (f2a+((f2b-f2a)/steps)), f2b).midicps;
-		var vola = ~ui[\columns][i].volume_from.value.asFloat.dbamp;
-		var volb = ~ui[\columns][i].volume_to.value.asFloat.dbamp;
+		var steps = ~ui[\columns][i].steps.value.asInteger;
 		var tspan = ((~ui[\columns][i].duration.value.asFloat)/total_duration)*(~ui[\absduration].value.asFloat);
-		var dur = tspan/f1atobsize;
-
-		if ((~ui[\columns][i].enabled.value),{
-			Pdef(("p"++i).asSymbol).quant = 0;
-			Pdef(("p"++i).asSymbol).fadeTime = 0.5;
-			Pdef(("p"++i).asSymbol,
-				Pbind(
-					\instrument, instrname.asSymbol,
-					\freqstart, Pseq(f1atob, inf),
-					\freqend, Pseq(f2atob, inf),
-					\startvol, Pseq([vola], inf),
-					\endvol, Pseq([volb], inf),
-					\timespan, Pseq([tspan], inf),
-					\amp, Pseries(vola, ((volb - vola)/f1atobsize), f1atobsize),
-				    \dur, Pseq([dur], inf)
+		if ((steps == 0), {
+			"REST".postln;
+			if ((~ui[\columns][i].enabled.value),{
+				Pdef(("p"++i).asSymbol).quant = 0;
+				Pdef(("p"++i).asSymbol).fadeTime = 0.5;
+				Pdef(("p"++i).asSymbol,
+					Pbind(
+						\instrument, \default,
+						\type, \rest,
+						\dur, Pseq([tspan],1);
+					);
 				);
-			);
-			enabledkeys = enabledkeys.add(("p"++i).asSymbol);
+				enabledkeys = enabledkeys.add(("p"++i).asSymbol);
+			});
+		}, /* else */{
+			var instrname = supported_instruments[~ui[\columns][i].instrument.value];
+			var f1a = (~ui[\nametomidi].value(~ui, ~ui[\columns][i].note_from.value));
+			var f1b = (~ui[\nametomidi].value(~ui, ~ui[\columns][i].note_to.value));
+			var f2a = f1a+(~ui[\columns][i].slide.value.asFloat);
+			var f2b = f1b+(~ui[\columns][i].slide.value.asFloat);
+			var vola = ~ui[\columns][i].volume_from.value.asFloat.dbamp;
+			var volb = ~ui[\columns][i].volume_to.value.asFloat.dbamp;
+
+			if ((steps == 1), {
+				"ONESTEP".postln;
+				if ((~ui[\columns][i].enabled.value),{
+					Pdef(("p"++i).asSymbol).quant = 0;
+					Pdef(("p"++i).asSymbol).fadeTime = 0.5;
+					Pdef(("p"++i).asSymbol,
+						Pbind(
+							\instrument, instrname.asSymbol,
+							\freqstart, Pseq([f1a], 1),
+							\freqend, Pseq([f1b], 1),
+							\startvol, Pseq([vola], 1),
+							\endvol, Pseq([volb], 1),
+							\timespan, Pseq([tspan], 1),
+							\amp, Pseq([(vola+volb)/2], 1),
+							\dur, Pseq([tspan],1)
+						);
+					);
+					enabledkeys = enabledkeys.add(("p"++i).asSymbol);
+				});
+			}, /* else */
+			{
+				var f1atob = series(f1a, (f1a+((f1b-f1a)/steps)), f1b).midicps;
+				var f1atobsize = f1atob.size;
+				var f2atob = series(f2a, (f2a+((f2b-f2a)/steps)), f2b).midicps;
+				var dur = tspan/f1atobsize;
+				steps = steps - 1;
+				if ((~ui[\columns][i].enabled.value),{
+					"MULTISTEP".postln;
+					Pdef(("p"++i).asSymbol).quant = 0;
+					Pdef(("p"++i).asSymbol).fadeTime = 0.5;
+					Pdef(("p"++i).asSymbol,
+						Pbind(
+							\instrument, instrname.asSymbol,
+							\freqstart, Pseq(f1atob, inf),
+							\freqend, Pseq(f2atob, inf),
+							\startvol, Pseq([vola], inf),
+							\endvol, Pseq([volb], inf),
+							\timespan, Pseq([tspan], inf),
+							\amp, Pseries(vola, ((volb - vola)/f1atobsize), f1atobsize),
+							\dur, Pseq([dur], inf)
+						);
+					);
+					enabledkeys = enabledkeys.add(("p"++i).asSymbol);
+				});
+
+			});
 		});
 	});
 
-	Pdef(\masterpattern, Psym(Pseq(enabledkeys, 1))).play;
+	Pdef(\masterpattern, Psym(Pseq(enabledkeys, 1)).trace).play;
 
 });
 
@@ -376,7 +408,7 @@ s.waitForBoot({
 				collection_so_far = collection_so_far ++ temp;
 		});
 
-		var signal = (10*amp/u.size)*EnvGen.kr(Env.perc(0.1,1,1), doneAction:Done.freeSelf)*DynKlank.ar(`[u*XLine.kr(freqstart, freqend, dur), v, v], BrownNoise.ar([0.007,0.007]));
+		var signal = (10*amp/u.size)*EnvGen.kr(Env.perc(0.1,dur,1), doneAction:Done.freeSelf)*DynKlank.ar(`[u*XLine.kr(freqstart, freqend, dur), v, v], BrownNoise.ar([0.007,0.007]));
 		Out.ar(out, Pan2.ar(signal));
 	}).add;
 
@@ -599,10 +631,11 @@ s.waitForBoot({
 			var fromstring = (item.note_from.value.asString++";"++item.volume_from.value.asString++"dB");
 			var tostring = (item.note_to.value.asString++";"++item.volume_to.value.asString++"dB");
 			var tostring_width = tostring.bounds(Font("Courier",20)).width;
-			var steps_string = (item.steps.value.asString ++ " steps;" ++ item.duration.value.asString ++ " dur");
+			var steps = item.steps.value;
+			var steps_string = (steps.asString ++ " steps;" ++ item.duration.value.asString ++ " dur");
 
 			if ((beginvolume < endvolume),{
-				if (((fromnote != 0) && (tonote != 0)), {
+				if (((fromnote != 0) && (tonote != 0) && (steps.asInteger!=0)), {
 					Pen.line(x1@y1, x2@(y2+(dvol/2)));
 					Pen.line(x1@y1, x2@(y2-(dvol/2)));
 					Pen.stroke;
@@ -616,7 +649,7 @@ s.waitForBoot({
 			},/* else */
 			{
 				if((beginvolume > endvolume),{
-					if (((fromnote != 0) && (tonote != 0)), {
+					if (((fromnote != 0) && (tonote != 0) && (steps.asInteger!=0)), {
 						Pen.line(x1@(y1+(dvol/2)), x2@y2);
 						Pen.line(x1@(y1-(dvol/2)), x2@y2);
 						Pen.stroke;
@@ -628,7 +661,7 @@ s.waitForBoot({
 						}
 					})
 				},/* else */{
-					if (((fromnote != 0) && (tonote != 0)), {
+					if (((fromnote != 0) && (tonote != 0) && (steps.asInteger != 0)), {
 						Pen.line(x1@y1, x2@y2);
 						Pen.stroke;
 					}, /* else */ {
@@ -641,7 +674,7 @@ s.waitForBoot({
 				})
 			});
 
-			if ( ((fromnote != 0) && (tonote != 0)), {
+			if ( ((fromnote != 0) && (tonote != 0) && (steps.asInteger != 0)), {
 				fromstring.drawAtPoint(
 					x1@y1,
 					Font("Courier",20),
@@ -668,6 +701,3 @@ s.waitForBoot({
 });
 
 )
-
-
-series(13, (13+((20-13)/4)), 20);

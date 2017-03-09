@@ -313,7 +313,7 @@ o.memSize = 8192*30;
 					Pbind(
 						\instrument, \default,
 						\type, \rest,
-						\dur, Pseq([tspan],1);
+						\dur, Pseq([tspan/50],50);
 					);
 				);
 				enabledkeys = enabledkeys.add(("p"++i).asSymbol);

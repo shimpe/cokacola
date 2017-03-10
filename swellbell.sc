@@ -349,7 +349,7 @@ o.memSize = 8192*30;
 			//"REST".postln;
 			if ((~ui[\columns][i].enabled.value),{
 				Pdef(("p"++i).asSymbol).quant = 0;
-				Pdef(("p"++i).asSymbol).fadeTime = 0.5;
+				Pdef(("p"++i).asSymbol).fadeTime = 0.1;
 				Pdef(("p"++i).asSymbol,
 					Pbind(
 						\instrument, \default,
@@ -372,7 +372,7 @@ o.memSize = 8192*30;
 				//"ONESTEP".postln;
 				if ((~ui[\columns][i].enabled.value),{
 					Pdef(("p"++i).asSymbol).quant = 0;
-					Pdef(("p"++i).asSymbol).fadeTime = 0.5;
+					Pdef(("p"++i).asSymbol).fadeTime = 0.1;
 					Pdef(("p"++i).asSymbol,
 						Pbind(
 							\instrument, instrname.asSymbol,
@@ -397,7 +397,7 @@ o.memSize = 8192*30;
 				if ((~ui[\columns][i].enabled.value),{
 					//"MULTISTEP".postln;
 					Pdef(("p"++i).asSymbol).quant = 0;
-					Pdef(("p"++i).asSymbol).fadeTime = 0.5;
+					Pdef(("p"++i).asSymbol).fadeTime = 0.1;
 					Pdef(("p"++i).asSymbol,
 						Pbind(
 							\instrument, instrname.asSymbol,
@@ -406,7 +406,7 @@ o.memSize = 8192*30;
 							\startvol, Pseq([vola], inf),
 							\endvol, Pseq([volb], inf),
 							\timespan, Pseq([tspan], inf),
-							\amp, Pseries(vola, ((volb - vola)/f1atobsize), f1atobsize),
+							\amp, Pseries(vola, ((volb - vola)/f1atobsize), (f1atobsize-1)),
 							\dur, Pseq([dur], inf)
 						);
 					);
@@ -486,10 +486,10 @@ s.waitForBoot({
 		var volumelabel = StaticText(w, Rect()).string_("Volume").font_(Font("Helvetica-Bold", 18)).backColor_(Color.yellow);
 		var volumefrom = StaticText(w, Rect()).string_("from");
 		var volumeto = StaticText(w, Rect()).string_("to");
-		var volumestart = TextField(w, Rect()).string_("-50").action_({ ~ui.canvas.refresh; });
+		var volumestart = TextField(w, Rect()).string_("ppp").action_({ ~ui.canvas.refresh; });
 		var volumeunit = StaticText(w, Rect()).string_("dB");
 
-		var endvolume = TextField(w, Rect()).string_("-6").action_({ ~ui.canvas.refresh; });
+		var endvolume = TextField(w, Rect()).string_("ff").action_({ ~ui.canvas.refresh; });
 		var endvolumeunit = StaticText(w, Rect()).string_("dB");
 
 		var notelabel = StaticText(w, Rect()).string_("Note").font_(Font("Helvetica-Bold", 18)).backColor_(Color.blue.lighten(0.7));

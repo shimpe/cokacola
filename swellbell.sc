@@ -190,6 +190,14 @@ o.memSize = 8192*30;
 	});
 });
 
+~ui.nametovolume = ({ | self, name |
+	if ((self[\volumes][name.asSymbol].notNil), {
+		self[\volumes][name.asSymbol].value.asFloat;
+	}, /*else*/ {
+		name.asFloat;
+	});
+});
+
 ~ui.duration_to_x = ({ | self, canvaswidth, margin, total_dur, dur |
 	dur.linlin(0, total_dur, 0, (canvaswidth-(2*margin))) + margin;
 });
@@ -338,7 +346,7 @@ o.memSize = 8192*30;
 		var steps = ~ui[\columns][i].steps.value.asInteger;
 		var tspan = ((~ui[\columns][i].duration.value.asFloat)/total_duration)*(~ui[\absduration].value.asFloat);
 		if ((steps == 0), {
-			"REST".postln;
+			//"REST".postln;
 			if ((~ui[\columns][i].enabled.value),{
 				Pdef(("p"++i).asSymbol).quant = 0;
 				Pdef(("p"++i).asSymbol).fadeTime = 0.5;
@@ -357,11 +365,11 @@ o.memSize = 8192*30;
 			var f1b = (~ui[\nametomidi].value(~ui, ~ui[\columns][i].note_to.value));
 			var f2a = f1a+(~ui[\columns][i].slide.value.asFloat);
 			var f2b = f1b+(~ui[\columns][i].slide.value.asFloat);
-			var vola = ~ui[\columns][i].volume_from.value.asFloat.dbamp;
-			var volb = ~ui[\columns][i].volume_to.value.asFloat.dbamp;
+			var vola = ~ui[\nametovolume].value(~ui, ~ui[\columns][i].volume_from.value).asFloat.dbamp;
+			var volb = ~ui[\nametovolume].value(~ui, ~ui[\columns][i].volume_to.value).asFloat.dbamp;
 
 			if ((steps == 1), {
-				"ONESTEP".postln;
+				//"ONESTEP".postln;
 				if ((~ui[\columns][i].enabled.value),{
 					Pdef(("p"++i).asSymbol).quant = 0;
 					Pdef(("p"++i).asSymbol).fadeTime = 0.5;
@@ -387,7 +395,7 @@ o.memSize = 8192*30;
 				var dur = tspan/f1atobsize;
 				steps = steps - 1;
 				if ((~ui[\columns][i].enabled.value),{
-					"MULTISTEP".postln;
+					//"MULTISTEP".postln;
 					Pdef(("p"++i).asSymbol).quant = 0;
 					Pdef(("p"++i).asSymbol).fadeTime = 0.5;
 					Pdef(("p"++i).asSymbol,
@@ -457,11 +465,14 @@ s.waitForBoot({
 
 	row0 = HLayout.new;
 	volumedefs.do({ | entry, idx |
-		var label = StaticText(w, Rect()).string_(entry[0].asString);
+		var label = StaticText(w, Rect()).string_(entry[0].asString).backColor_(Color.new255(255,165,0));
 		var tf = TextField(w, Rect()).string_(entry[1].asString).action_({ ~ui[\on_volume_update].value(~ui, ~slidecollection, entry[0], entry[1]); });
+		var unit = StaticText(w, Rect()).string_("dB");
 		row0.add(label);
 		~ui[\volumes][entry[0]] = tf;
 		row0.add(tf);
+		row0.add(unit);
+		row0.add(nil);
 	});
 	col0.add(row0);
 
@@ -667,8 +678,8 @@ s.waitForBoot({
 
 		Pen.fillColor = Color.black;
 		enabled_entries.do({ | item, i |
-			var beginvolume = item.volume_from.value.asFloat;
-			var endvolume = item.volume_to.value.asFloat;
+			var beginvolume = ~ui[\nametovolume].value(~ui, item.volume_from.value);
+			var endvolume = ~ui[\nametovolume].value(~ui, item.volume_to.value);
 			var dvol = ((beginvolume - endvolume).abs);
 			var fromnote = ~ui[\nametomidi].value(~ui,item.note_from.value.asString);
 			var tonote = ~ui[\nametomidi].value(~ui,item.note_to.value.asString);
@@ -676,8 +687,8 @@ s.waitForBoot({
 			var y1 = ~ui[\note_to_y].value(~ui, canvasheight, margin, lowestnote, highestnote, fromnote);
 			var x2 = ~ui[\duration_to_x].value(~ui, canvaswidth, margin, totalduration, (item.duration.value.asFloat + inc_duration));
 			var y2 = ~ui[\note_to_y].value(~ui, canvasheight, margin, lowestnote, highestnote, tonote);
-			var fromstring = (item.note_from.value.asString++";"++item.volume_from.value.asString++"dB");
-			var tostring = (item.note_to.value.asString++";"++item.volume_to.value.asString++"dB");
+			var fromstring = (item.note_from.value.asString++";"++item.volume_from.value.asString);
+			var tostring = (item.note_to.value.asString++";"++item.volume_to.value.asString);
 			var tostring_width = tostring.bounds(Font("Courier",20)).width;
 			var steps = item.steps.value;
 			var steps_string = (steps.asString ++ " steps;" ++ item.duration.value.asString ++ " dur");

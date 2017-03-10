@@ -1,10 +1,11 @@
 (
+// groep 1
 // CoKa CoLa - COntemporary KAgel COmposition LAb
 var o = Server.local.options;
 var supported_instruments = ["hellsbells"];
 var no_of_cols = 8;
 var col0;
-var row1, row2;
+var row0, row1, row2;
 var row2cols,buttoncol,lowlistviewcol,midlistviewcol,highlistviewcol;
 var canvascol,slidegrid;
 var absdurationlabel,lowlabel,midlabel,highlabel;
@@ -12,18 +13,21 @@ var absduration;
 var arr_helper1, arr_helper2;
 var current_columns_for_pattern = ();
 
+var volumedefs = [[\ffff : 0], [\fff : -5], [\ff : -10], [\f : -15], [\mf : -20], [\mp : -25], [\p : -30], [\pp : -35], [\ppp : -40], [\pppp : -45]];
+
 o.memSize = 8192*30;
 
 ~active_step_button = 0;
 ~slidecollection = (); // mapping from ( low/mid/high, slide index ) => slidemodel (column *values*: enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument)
 ~slidecollection.data = ();
-
+~slidecollection.data.volumes = ();
 ~slidecollection.make_slidekey = ({ |self, lowmidhigh, slideno |
 	(lowmidhigh ++ "_" ++ slideno).asString;
 });
 
 ~slidecollection.from_ui = ({ |self, ui, slidekey |
 	var columns = ();
+	var vdefs = [];
 	no_of_cols.do({ | i |
 		var columnvalues = ();
 		columnvalues.enabled = ui[\columns][i].enabled.value;
@@ -40,9 +44,24 @@ o.memSize = 8192*30;
 	columns.absduration = ui[\absduration].value;
 
 	self[\data][slidekey.asSymbol] = columns;
+
+	vdefs = ();
+	volumedefs.do({ | entry, i |
+		var key = entry[0];
+		vdefs[key] = ui[\volumes][key].value;
+	});
+	self[\data][\volumes] = vdefs;
 });
 
 ~slidecollection.to_ui = ({ | self, ui, slidekey |
+
+	if ((self[\data][\volumes].notNil), {
+		self[\data][\volumes].keysValuesDo({
+			| key, val |
+			ui[\volumes][key].value_(val);
+		});
+	});
+
 	if ((self[\data][slidekey.asSymbol].notNil),{
 		var columns = self[\data][slidekey.asSymbol];
 		ui[\absduration].value_(columns.absduration);
@@ -63,7 +82,7 @@ o.memSize = 8192*30;
 });
 
 ~slidecollection.on_save = ({ | self, name |
-	var d = self[\data];
+	d = self[\data];
 	d.writeArchive(Document.current.dir +/+ name);
 });
 
@@ -82,6 +101,7 @@ o.memSize = 8192*30;
 });
 
 ~ui = ();
+~ui.volumes = ();
 ~ui.columns = []; // column *controls* enabled, volume_from, volume_to, note_from, note_to, slide, steps, duration, instrument
 ~ui.stepbuttons = []; // 0-49
 ~ui.absduration = nil;
@@ -98,6 +118,10 @@ o.memSize = 8192*30;
 ~ui.midlistview = nil;
 ~ui.highlistview = nil;
 ~ui.canvas = nil;
+
+~ui.on_volume_update = { | self, slidecollection, key, value |
+	slidecollection[\data][\volumes][key] = value;
+};
 
 ~ui.calc_enabled_entries = { |self|
 	self.columns.select({ | item, i| item.enabled.value });
@@ -284,14 +308,23 @@ o.memSize = 8192*30;
 });
 
 ~ui.on_save = ({ | self, slidecollection, sequencemodel |
-	var a = slidecollection[\on_save].value(~slidecollection, "slide_def.scpreset");
-	var b = sequencemodel[\on_save].value(~sequencemodel, "seq_def.scpreset");
+
+	var d;
+	var vdefs = ();
+	volumedefs.do({ | entry, i |
+		var key = entry[0];
+		vdefs[key] = self[\volumes][key].value;
+	});
+	slidecollection[\data][\volumes] = vdefs;
+
+	slidecollection[\on_save].value(~slidecollection, "slide_def.scpreset");
+	sequencemodel[\on_save].value(~sequencemodel, "seq_def.scpreset");
 });
 
 ~ui.on_load = ({ | self, slidecollection, sequencemodel |
 	~slidecollection = slidecollection[\on_load].value(~slidecollection, "slide_def.scpreset");
 	~sequencemodel = sequencemodel[\on_load].value(~sequencemodel, "seq_def.scpreset");
-	slidecollection[\to_ui].value(slidecollection, "low_0");
+	slidecollection[\to_ui].value(slidecollection, ~ui, "low_0");
 	self[\set_active_slidekey].value(self, "low_0");
 	self[\update_listview_colors].value(self, slidecollection);
 	self[\on_step_button].value(self, 0, ~sequencemodel, ~slidecollection);
@@ -421,6 +454,17 @@ s.waitForBoot({
 	w = Window(bounds: Rect(0, 0, width, height));
 
 	col0 = VLayout.new;
+
+	row0 = HLayout.new;
+	volumedefs.do({ | entry, idx |
+		var label = StaticText(w, Rect()).string_(entry[0].asString);
+		var tf = TextField(w, Rect()).string_(entry[1].asString).action_({ ~ui[\on_volume_update].value(~ui, ~slidecollection, entry[0], entry[1]); });
+		row0.add(label);
+		~ui[\volumes][entry[0]] = tf;
+		row0.add(tf);
+	});
+	col0.add(row0);
+
 	row1 = HLayout.new;
 	row2 = HLayout.new;
 

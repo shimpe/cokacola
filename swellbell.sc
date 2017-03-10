@@ -174,7 +174,7 @@ o.memSize = 8192*30;
 	note.linlin(min_note, max_note, (canvasheight-(2*margin)), 0) + margin;
 });
 
-~ui.on_slide_button = ({ | self, idx, sequencemodel, slidecollection |
+~ui.on_step_button = ({ | self, idx, sequencemodel, slidecollection |
 	self[\stepbuttons].do({
 		| item, i |
 		if ((i != idx), {
@@ -294,7 +294,7 @@ o.memSize = 8192*30;
 	slidecollection[\to_ui].value(slidecollection, "low_0");
 	self[\set_active_slidekey].value(self, "low_0");
 	self[\update_listview_colors].value(self, slidecollection);
-	self[\on_slide_button].value(self, 0, ~sequencemodel, ~slidecollection);
+	self[\on_step_button].value(self, 0, ~sequencemodel, ~slidecollection);
 });
 
 ~ui.on_play_slide = ({| self |
@@ -376,8 +376,12 @@ o.memSize = 8192*30;
 		});
 	});
 
-	Pdef(\masterpattern, Psym(Pseq(enabledkeys, 1)).trace).play;
+	Pdef(\masterpattern, Psym(Pseq(enabledkeys, 1))).play;
 
+});
+
+~ui.on_play_step = ({ | self |
+	~ui[\stepbuttons]
 });
 
 s.waitForBoot({
@@ -493,7 +497,7 @@ s.waitForBoot({
 	~ui.loadbutton = Button.new(w, Rect()).string_("Load").states_([["Load",Color.black,Color.gray]]).action_({ ~ui[\on_load].value(~ui, ~slidecollection, ~sequencemodel)});
 	absdurationlabel = StaticText(w, Rect()).string_("Abs. Dur. (sec)");
 	~ui.absduration = TextField(w, Rect()).string_("10");
-	~ui.playstepbutton = Button.new(w, Rect()).string_("Play step").states_([["Play step",Color.black,Color.gray]]);
+	~ui.playstepbutton = Button.new(w, Rect()).string_("Play step").states_([["Play step",Color.black,Color.gray]]).action_({ ~ui[\on_play_step].value(~ui);});
 	~ui.playandnextbutton = Button.new(w, Rect()).string_("Play&Next").states_([["Play&Next",Color.black,Color.gray]]);
 	~ui.playslidebutton = Button.new(w, Rect()).string_("Play slide").states_([["Play slide",Color.black,Color.gray]]).action_({ ~ui[\on_play_slide].value(~ui); });
 	~ui.registerslidebutton = Button.new(w, Rect())
@@ -583,10 +587,10 @@ s.waitForBoot({
 	canvascol = VLayout.new;
 	~ui.canvas = UserView(w,Rect()).background_(Color.white).minSize = 1400@500;
 
-	arr_helper1 = Array.fill(25,{|i| Button.new(w,Rect()).maxSize_(50@20).string_({(i+1).asString}.value).states_([[{(i+1).asString}.value,Color.black,Color.white],[{(i+1).asString}.value,Color.black,Color.blue.lighten(0.5)],[{(i+1).asString}.value,Color.black,Color.green.lighten(0.5)]]).action_({ |button| ~ui[\on_slide_button].value(~ui, i, ~sequencemodel, ~slidecollection); }); });
+	arr_helper1 = Array.fill(25,{|i| Button.new(w,Rect()).maxSize_(50@20).string_({(i+1).asString}.value).states_([[{(i+1).asString}.value,Color.black,Color.white],[{(i+1).asString}.value,Color.black,Color.blue.lighten(0.5)],[{(i+1).asString}.value,Color.black,Color.green.lighten(0.5)]]).action_({ |button| ~ui[\on_step_button].value(~ui, i, ~sequencemodel, ~slidecollection); }); });
 	~ui[\stepbuttons] = [];
 	~ui[\stepbuttons] = ~ui[\stepbuttons].addAll(arr_helper1);
-	arr_helper2 = Array.fill(25,{|i| Button.new(w,Rect()).maxSize_(50@20).string_({(i+26).asString}.value) .states_([[{(i+26).asString}.value,Color.black,Color.white],[{(i+26).asString}.value,Color.black,Color.blue.lighten(0.5)],[{(i+1).asString}.value,Color.black,Color.green.lighten(0.5)]]).action_({| button | ~ui[\on_slide_button].value(~ui, i+25, ~sequencemodel, ~slidecollection)}); });
+	arr_helper2 = Array.fill(25,{|i| Button.new(w,Rect()).maxSize_(50@20).string_({(i+26).asString}.value) .states_([[{(i+26).asString}.value,Color.black,Color.white],[{(i+26).asString}.value,Color.black,Color.blue.lighten(0.5)],[{(i+1).asString}.value,Color.black,Color.green.lighten(0.5)]]).action_({| button | ~ui[\on_step_button].value(~ui, i+25, ~sequencemodel, ~slidecollection)}); });
 	~ui[\stepbuttons] = ~ui[\stepbuttons].addAll(arr_helper2);
 	arr_helper1[0].valueAction_(1);
 	slidegrid = GridLayout.rows(arr_helper1, arr_helper2);

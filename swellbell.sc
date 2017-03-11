@@ -109,7 +109,7 @@ o.memSize = 8192*30;
 ~ui.absduration = nil;
 ~ui.loadbutton = nil;
 ~ui.playstepbutton = nil;
-~ui.playandnextbutton = nil;
+~ui.nextandplaybutton = nil;
 ~ui.playslidebutton = nil;
 ~ui.registerslidebutton = nil;
 ~ui.unregisterslidebutton = nil;
@@ -391,10 +391,17 @@ o.memSize = 8192*30;
 				});
 			}, /* else */
 			{
-				var f1atob = series(f1a, (f1a+((f1b-f1a)/steps)), f1b).midicps;
-				var f1atobsize = f1atob.size;
-				var f2atob = series(f2a, (f2a+((f2b-f2a)/steps)), f2b).midicps;
-				var dur = tspan/f1atobsize;
+				var f1atob, f1atobsize, f2atob, dur;
+				if ((f1a == f1b), {
+					f1b = f1a+0.001;
+				});
+				if ((f2a == f2b), {
+					f2b = f2a+0.001;
+				});
+				f1atob = series(f1a, (f1a+((f1b-f1a)/steps)), f1b).midicps;
+				f1atobsize = f1atob.size;
+				f2atob = series(f2a, (f2a+((f2b-f2a)/steps)), f2b).midicps;
+				dur = tspan/f1atobsize;
 				steps = steps - 1;
 				if ((~ui[\columns][i].enabled.value),{
 					//"MULTISTEP".postln;
@@ -433,11 +440,9 @@ o.memSize = 8192*30;
 	});
 });
 
-~ui.on_play_step_and_next = ({ |self|
+~ui.on_play_next_and_step = ({ |self|
 	var enabled = 0;
 	var prevbutton = nil;
-
-	self[\on_play_step].value(self);
 	~ui[\stepbuttons].do({
 		| button, i |
 		if ((button.value == 1),{
@@ -452,6 +457,7 @@ o.memSize = 8192*30;
 			button.valueAction_(1);
 		});
 	});
+	self[\on_play_step].value(self);
 });
 
 s.waitForBoot({
@@ -582,7 +588,7 @@ s.waitForBoot({
 	absdurationlabel = StaticText(w, Rect()).string_("Abs. Dur. (sec)");
 	~ui.absduration = TextField(w, Rect()).string_("10");
 	~ui.playstepbutton = Button.new(w, Rect()).string_("Play step").states_([["Play step",Color.black,Color.gray]]).action_({ ~ui[\on_play_step].value(~ui);});
-	~ui.playandnextbutton = Button.new(w, Rect()).string_("Play&Next").states_([["Play&Next",Color.black,Color.gray]]).action_({ ~ui[\on_play_step_and_next].value(~ui);});
+	~ui.nextandplaybutton = Button.new(w, Rect()).string_("Next&Play").states_([["Next&Play",Color.black,Color.gray]]).action_({ ~ui[\on_play_next_and_step].value(~ui);});
 	~ui.playslidebutton = Button.new(w, Rect()).string_("Play slide").states_([["Play slide",Color.black,Color.gray]]).action_({ ~ui[\on_play_slide].value(~ui); });
 	~ui.registerslidebutton = Button.new(w, Rect())
 	   .string_("Register slide")
@@ -607,7 +613,7 @@ s.waitForBoot({
 	buttoncol.add(~ui.absduration);
 	buttoncol.add(nil);
 	buttoncol.add(~ui.playstepbutton);
-	buttoncol.add(~ui.playandnextbutton);
+	buttoncol.add(~ui.nextandplaybutton);
 	buttoncol.add(nil);
 	buttoncol.add(~ui.playslidebutton);
 	buttoncol.add(~ui.registerslidebutton);

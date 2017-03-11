@@ -13,7 +13,9 @@ var absduration;
 var arr_helper1, arr_helper2;
 var current_columns_for_pattern = ();
 
-var volumedefs = [[\ffff : 0], [\fff : -5], [\ff : -10], [\f : -15], [\mf : -20], [\mp : -25], [\p : -30], [\pp : -35], [\ppp : -40], [\pppp : -45]];
+var maxvol = 10;
+var minvol = -50;
+var volumedefs = [[\ffff : 9.linlin(0,9,minvol,maxvol).round(0.01)], [\fff : 8.linlin(0,9,minvol,maxvol).round(0.01)], [\ff : 7.linlin(0,9,minvol,maxvol).round(0.01)], [\f : 6.linlin(0,9,minvol,maxvol).round(0.01)], [\mf : 5.linlin(0,9,minvol,maxvol).round(0.01)], [\mp : 4.linlin(0,9,minvol,maxvol).round(0.01)], [\p : 3.linlin(0,9,minvol,maxvol).round(0.01)], [\pp : 2.linlin(0,9,minvol,maxvol).round(0.01)], [\ppp : 1.linlin(0,9,minvol,maxvol).round(0.01)], [\pppp : 0.linlin(0,9,minvol,maxvol).round(0.01)]];
 
 o.memSize = 8192*30;
 
@@ -422,7 +424,34 @@ o.memSize = 8192*30;
 });
 
 ~ui.on_play_step = ({ | self |
-	~ui[\stepbuttons]
+	~ui[\stepbuttons].do({
+		| button, i |
+		if ((button.value == 1),{
+			button.valueAction_(1);
+			~ui[\on_play_slide].value(~ui);
+		});
+	});
+});
+
+~ui.on_play_step_and_next = ({ |self|
+	var enabled = 0;
+	var prevbutton = nil;
+
+	self[\on_play_step].value(self);
+	~ui[\stepbuttons].do({
+		| button, i |
+		if ((button.value == 1),{
+			button.valueAction_(1);
+			~ui[\on_play_slide].value(~ui);
+			enabled = 1;
+			prevbutton = button;
+		});
+		if (((enabled == 1) && (button.value == 2)), {
+			enabled = 2;
+			prevbutton.value_(2);
+			button.valueAction_(1);
+		});
+	});
 });
 
 s.waitForBoot({
@@ -553,7 +582,7 @@ s.waitForBoot({
 	absdurationlabel = StaticText(w, Rect()).string_("Abs. Dur. (sec)");
 	~ui.absduration = TextField(w, Rect()).string_("10");
 	~ui.playstepbutton = Button.new(w, Rect()).string_("Play step").states_([["Play step",Color.black,Color.gray]]).action_({ ~ui[\on_play_step].value(~ui);});
-	~ui.playandnextbutton = Button.new(w, Rect()).string_("Play&Next").states_([["Play&Next",Color.black,Color.gray]]);
+	~ui.playandnextbutton = Button.new(w, Rect()).string_("Play&Next").states_([["Play&Next",Color.black,Color.gray]]).action_({ ~ui[\on_play_step_and_next].value(~ui);});
 	~ui.playslidebutton = Button.new(w, Rect()).string_("Play slide").states_([["Play slide",Color.black,Color.gray]]).action_({ ~ui[\on_play_slide].value(~ui); });
 	~ui.registerslidebutton = Button.new(w, Rect())
 	   .string_("Register slide")
@@ -691,7 +720,8 @@ s.waitForBoot({
 			var tostring = (item.note_to.value.asString++";"++item.volume_to.value.asString);
 			var tostring_width = tostring.bounds(Font("Courier",20)).width;
 			var steps = item.steps.value;
-			var steps_string = (steps.asString ++ " steps;" ++ item.duration.value.asString ++ " dur");
+			//var steps_string = (steps.asString ++ " steps;" ++ item.duration.value.asString ++ " dur");
+			var steps_string = steps.asString;
 
 			if ((beginvolume < endvolume),{
 				if (((fromnote != 0) && (tonote != 0) && (steps.asInteger!=0)), {

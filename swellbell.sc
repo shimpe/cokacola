@@ -680,7 +680,7 @@ s.waitForBoot({
 	arr_helper1 = Array.fill(25,{|i| Button.new(w,Rect()).maxSize_(50@20).string_({(i+1).asString}.value).states_([[{(i+1).asString}.value,Color.black,Color.white],[{(i+1).asString}.value,Color.black,Color.blue.lighten(0.5)],[{(i+1).asString}.value,Color.black,Color.green.lighten(0.5)]]).action_({ |button| ~ui[\on_step_button].value(~ui, i, ~sequencemodel, ~slidecollection); }); });
 	~ui[\stepbuttons] = [];
 	~ui[\stepbuttons] = ~ui[\stepbuttons].addAll(arr_helper1);
-	arr_helper2 = Array.fill(25,{|i| Button.new(w,Rect()).maxSize_(50@20).string_({(i+26).asString}.value) .states_([[{(i+26).asString}.value,Color.black,Color.white],[{(i+26).asString}.value,Color.black,Color.blue.lighten(0.5)],[{(i+1).asString}.value,Color.black,Color.green.lighten(0.5)]]).action_({| button | ~ui[\on_step_button].value(~ui, i+25, ~sequencemodel, ~slidecollection)}); });
+	arr_helper2 = Array.fill(25,{|i| Button.new(w,Rect()).maxSize_(50@20).string_({(i+26).asString}.value) .states_([[{(i+26).asString}.value,Color.black,Color.white],[{(i+26).asString}.value,Color.black,Color.blue.lighten(0.5)],[{(i+26).asString}.value,Color.black,Color.green.lighten(0.5)]]).action_({| button | ~ui[\on_step_button].value(~ui, i+25, ~sequencemodel, ~slidecollection)}); });
 	~ui[\stepbuttons] = ~ui[\stepbuttons].addAll(arr_helper2);
 	arr_helper1[0].valueAction_(1);
 	slidegrid = GridLayout.rows(arr_helper1, arr_helper2);

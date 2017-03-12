@@ -43,7 +43,6 @@ o.memSize = 8192*30;
 		columnvalues.instrument = ui[\columns][i].instrument.value;
 		columns[i.asSymbol] = columnvalues;
 	});
-	columns.absduration = ui[\absduration].value;
 
 	self[\data][slidekey.asSymbol] = columns;
 
@@ -66,7 +65,6 @@ o.memSize = 8192*30;
 
 	if ((self[\data][slidekey.asSymbol].notNil),{
 		var columns = self[\data][slidekey.asSymbol];
-		ui[\absduration].value_(columns.absduration);
 		no_of_cols.do({ | i |
 			ui[\columns][i].enabled.value_(columns[i.asSymbol].enabled);
 			ui[\columns][i].volume_from.value_(columns[i.asSymbol].volume_from);
@@ -228,7 +226,7 @@ o.memSize = 8192*30;
 });
 
 ~ui.on_register_active_step_button = ({ |self, slidecollection, sequencemodel |
-	sequencemodel[\data][~active_step_button.asSymbol] = self[\get_active_slidekey].value(self, slidecollection);
+	sequencemodel[\data][~active_step_button.asSymbol] = (\key: self[\get_active_slidekey].value(self, slidecollection), \absduration : self[\absduration].value);
 });
 
 ~ui.on_unregister_active_step_button = ({ |self, slidecollection, sequencemodel |
@@ -237,7 +235,8 @@ o.memSize = 8192*30;
 
 ~ui.update_for_selected_step = ({ | self, idx, sequencemodel, slidecollection |
 	if ((sequencemodel[\data][~active_step_button.asSymbol].notNil), {
-		self[\set_active_slidekey].value(self, sequencemodel[\data][~active_step_button.asSymbol]);
+		self[\set_active_slidekey].value(self, sequencemodel[\data][~active_step_button.asSymbol][\key]);
+		self[\absduration].value_(sequencemodel[\data][~active_step_button.asSymbol][\absduration]);
 	});
 });
 
@@ -338,6 +337,7 @@ o.memSize = 8192*30;
 	self[\set_active_slidekey].value(self, "low_0");
 	self[\update_listview_colors].value(self, slidecollection);
 	self[\on_step_button].value(self, 0, ~sequencemodel, ~slidecollection);
+	self[\absduration].value_(~sequencemodel[\data][~active_step_button.asSymbol][\key]);
 });
 
 ~ui.on_play_slide = ({| self |

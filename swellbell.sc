@@ -106,6 +106,7 @@ o.memSize = 8192*30;
 ~ui.stepbuttons = []; // 0-49
 ~ui.absduration = nil;
 ~ui.loadbutton = nil;
+~ui.importstepsbutton = nil;
 ~ui.playstepbutton = nil;
 ~ui.nextandplaybutton = nil;
 ~ui.playslidebutton = nil;
@@ -340,6 +341,39 @@ o.memSize = 8192*30;
 	self[\absduration].value_(~sequencemodel[\data][~active_step_button.asSymbol][\key]);
 });
 
+// read a text file containing a single line with slide numbers, e.g.
+// 00 17 17 00 19 24 24 20 20 21 21 02 02 04 12 09 17 20 03 10 05 05 13 07 06 06 06 17 17 11 00 21 00 15 15 01 17 14 14 15 16 00 15 11 11 02 15 01 15 00
+// 00
+~ui.on_import_steps = ({ | self |
+	var file, result, sequencemodel;
+	sequencemodel = ();
+	sequencemodel.data = ();
+	file = File("composition.txt","r");
+	result = List.new;
+	result = result.add(List.new);
+	file.getLine(1024)
+	.replace("\n","")
+	.replace("\r","")
+	.split($ )
+	.collect({|s| s.asFloat })
+	.do({|x|
+		var y = x;
+		if (((result.last.size != 0) && (x != result.last.last)), {
+			result = result.add(List.new);
+		});
+		if ((x == 0),{
+			y = 25;
+		});
+		result.last.add(y);
+	});
+
+	result.do({ | el, idx |
+		sequencemodel[\data][idx.asSymbol] = (\key: ("low_"++el[0]), \absduration : el.size*10);
+	});
+
+	~sequencemodel = sequencemodel;
+});
+
 ~ui.on_play_slide = ({| self |
 	var enabled_entries= ~ui[\calc_enabled_entries].value(~ui);
 	var total_duration = ~ui[\calc_total_duration].value(~ui, enabled_entries);
@@ -375,7 +409,9 @@ o.memSize = 8192*30;
 				if ((~ui[\columns][i].enabled.value),{
 					Pdef(("p"++i).asSymbol).quant = 0;
 					Pdef(("p"++i).asSymbol).fadeTime = 0.1;
-					Pdef(("p"++i).asSymbol,
+
+					if ((vola <= volb), {
+						Pdef(("p"++i).asSymbol,
 						Pbind(
 							\instrument, instrname.asSymbol,
 							\freqstart, Pseq([f1a], 1),
@@ -384,9 +420,28 @@ o.memSize = 8192*30;
 							\endvol, Pseq([volb], 1),
 							\timespan, Pseq([tspan], 1),
 							\amp, Pseq([(vola+volb)/2], 1),
-							\dur, Pseq([tspan],1)
+							\dur, Pseq([tspan],1),
+							\intraampstart, 0.1,
+							\iontraampend, 1,
 						);
 					);
+					}, /* else */ {
+						Pdef(("p"++i).asSymbol,
+						Pbind(
+							\instrument, instrname.asSymbol,
+							\freqstart, Pseq([f1a], 1),
+							\freqend, Pseq([f1b], 1),
+							\startvol, Pseq([vola], 1),
+							\endvol, Pseq([volb], 1),
+							\timespan, Pseq([tspan], 1),
+							\amp, Pseq([(vola+volb)/2], 1),
+							\dur, Pseq([tspan],1),
+                            \intraampstart, 1,
+							\iontraampend, 0.1,
+						);
+					);
+					});
+
 					enabledkeys = enabledkeys.add(("p"++i).asSymbol);
 				});
 			}, /* else */
@@ -460,11 +515,12 @@ o.memSize = 8192*30;
 	self[\on_play_step].value(self);
 });
 
+
 s.waitForBoot({
 	var width = 1900;
 	var height = 1000;
 
-	SynthDef(\hellsbells, {|out=0, pan=0, freqstart=440, freqend=880, amp=0.1, dur=2|
+	SynthDef(\hellsbells, {|out=0, pan=0, freqstart=440, freqend=880, amp=0.1, dur=2, intraampstart=1, intraampend=1|
 		var t = [1, 3.2, 6.23, 6.27, 9.92, 14.15]; // partials
 		var a = amp*t.collect({ |i,idx| 1*(0.99*idx) }); // amplitude per partial
 		var u = t.inject([],
@@ -488,20 +544,20 @@ s.waitForBoot({
 				collection_so_far = collection_so_far ++ temp;
 		});
 
-		var signal = (10*amp/u.size)*EnvGen.kr(Env.perc(0.1,dur,1), doneAction:Done.freeSelf)*DynKlank.ar(`[u*XLine.kr(freqstart, freqend, dur), v, v], BrownNoise.ar([0.007,0.007]));
+		var signal = (10*XLine.kr(intraampstart,intraampend,dur)*amp/u.size)*EnvGen.kr(Env.perc(0.1,dur,1), doneAction:Done.freeSelf)*DynKlank.ar(`[u*XLine.kr(freqstart, freqend, dur), v, v], BrownNoise.ar([0.007,0.007]));
 		Out.ar(out, Pan2.ar(signal));
 	}).add;
 
-	SynthDef(\snowBell, { | out=0, pan=0, freqstart=440, freqend=880, amp=0.1, dur=2|
+	SynthDef(\snowBell, { | out=0, pan=0, freqstart=440, freqend=880, amp=0.1, dur=2, intraampstart=1, intraampend=1|
 		var x, env;
 		env = EnvGen.kr(Env.perc(0.001, 550/freqstart, amp), doneAction:2);
-		x = Mix.fill(6, {SinOsc.ar(XLine.ar(freqstart,freqend,dur), 0, Rand(0.1,0.2))});
+		x = Mix.fill(6, {XLine.kr(intraampstart,intraampend,dur)*SinOsc.ar(XLine.ar(freqstart,freqend,dur), 0, Rand(0.1,0.2))});
 		x = Pan2.ar(x, pan, env);
 		Out.ar(out, x);
 	}).add;
 
 	SynthDef(\pad, { | out=0, pan=0, freqstart=440, freqend=880, amp=0.1, dur=21, detune=#[0.5, /*1, 0.499,*/ 0.998, 0.4995,
-		               /*0.999,*/ 0.5005, /*1.001,*/ 0.501, 1.002], cutofffreq=0.05, cutofflow=1000, cutoffhigh=1500|
+		               /*0.999,*/ 0.5005, /*1.001,*/ 0.501, 1.002], cutofffreq=0.05, cutofflow=1000, cutoffhigh=1500, intraampstart=1, intraampend=1|
 		var sig, env, totalsig;
 		var cutoffavg= (cutofflow+cutoffhigh)/2;
 		var cutoffdiff= cutoffhigh-cutofflow;
@@ -509,7 +565,7 @@ s.waitForBoot({
 		var release= min(1,dur/3)*3;
 	sig = MoogFF.ar(LFSaw.ar(1*XLine.kr(freqstart,freqend,dur)*detune)+LFSaw.ar(2*XLine.kr(freqstart,freqend,dur)*detune)+LFSaw.ar(4*XLine.kr(freqstart,freqend,dur)*detune)+LFSaw.ar(8*XLine.kr(freqstart,freqend,dur)*detune), ((LFPulse.kr(cutofffreq)*cutoffavg)+(cutoffavg+cutofflow)));
 	    env = EnvGen.kr(Env.linen(attack, dur-(attack+release), release), doneAction:2);
-		totalsig = amp*env*sig;
+		totalsig = XLine.kr(intraampstart,intraampend,dur)*env*sig;
 	    totalsig = Pan2.ar(totalsig, pan, env);
 		Out.ar(out,  FreeVerb.ar(Splay.ar(totalsig)));
 	}).add;
@@ -526,6 +582,7 @@ s.waitForBoot({
 		totalsig = Pan2.ar(totalsig, pan, env);
 		Out.ar(out, Splay.ar(totalsig));
 	}).add;
+
 	s.sync;
 
 	w = Window(bounds: Rect(0, 0, width, height));
@@ -619,6 +676,7 @@ s.waitForBoot({
 
 	buttoncol = VLayout.new;
 	~ui.loadbutton = Button.new(w, Rect()).string_("Load").states_([["Load",Color.black,Color.gray]]).action_({ ~ui[\on_load].value(~ui, ~slidecollection, ~sequencemodel)});
+	~ui.importstepsbutton = Button.new(w, Rect()).string_("Import steps").states_([["Import steps",Color.black,Color.gray]]).action_({ ~ui[\on_import_steps].value(~ui, ~sequencemodel)});
 	absdurationlabel = StaticText(w, Rect()).string_("Abs. Dur. (sec)");
 	~ui.absduration = TextField(w, Rect()).string_("10");
 	~ui.playstepbutton = Button.new(w, Rect()).string_("Play step").states_([["Play step",Color.black,Color.gray]]).action_({ ~ui[\on_play_step].value(~ui);});
@@ -643,6 +701,7 @@ s.waitForBoot({
 
 	~ui.savebutton = Button.new(w, Rect()).string_("Save").states_([["Save",Color.black,Color.gray]]).action_({ ~ui[\on_save].value(~ui, ~slidecollection, ~sequencemodel); });
 	buttoncol.add(~ui.loadbutton);
+	buttoncol.add(~ui.importstepsbutton);
 	buttoncol.add(absdurationlabel);
 	buttoncol.add(~ui.absduration);
 	buttoncol.add(nil);
@@ -830,3 +889,5 @@ s.waitForBoot({
 });
 
 )
+
+

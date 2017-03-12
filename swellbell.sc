@@ -2,7 +2,7 @@
 // groep 1
 // CoKa CoLa - COntemporary KAgel COmposition LAb
 var o = Server.local.options;
-var supported_instruments = ["hellsbells", "snowBell"];
+var supported_instruments = ["hellsbells", "snowBell", "pad"];
 var no_of_cols = 8;
 var col0;
 var row0, row1, row2;
@@ -499,6 +499,20 @@ s.waitForBoot({
 		x = Pan2.ar(x, pan, env);
 		Out.ar(out, x);
 	}).add;
+
+	SynthDef(\pad, { | out=0, pan=0, freqstart=440, freqend=880, amp=0.1, dur=21, detune=#[0.5, /*1, 0.499,*/ 0.998, 0.4995,
+		               /*0.999,*/ 0.5005, /*1.001,*/ 0.501, 1.002], cutofffreq=0.05, cutofflow=1000, cutoffhigh=1500|
+		var sig, env, totalsig;
+		var cutoffavg= (cutofflow+cutoffhigh)/2;
+		var cutoffdiff= cutoffhigh-cutofflow;
+		var attack = min(1,dur/3);
+		var release= min(1,dur/3)*3;
+	sig = MoogFF.ar(LFSaw.ar(1*XLine.kr(freqstart,freqend,dur)*detune)+LFSaw.ar(2*XLine.kr(freqstart,freqend,dur)*detune)+LFSaw.ar(4*XLine.kr(freqstart,freqend,dur)*detune)+LFSaw.ar(8*XLine.kr(freqstart,freqend,dur)*detune), ((LFPulse.kr(cutofffreq)*cutoffavg)+(cutoffavg+cutofflow)));
+	    env = EnvGen.kr(Env.linen(attack, dur-(attack+release), release), doneAction:2);
+		totalsig = amp*env*sig;
+	    totalsig = Pan2.ar(totalsig, pan, env);
+		Out.ar(out,  FreeVerb.ar(Splay.ar(totalsig)));
+}).add;
 
 	s.sync;
 

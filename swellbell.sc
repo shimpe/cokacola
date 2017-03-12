@@ -2,7 +2,7 @@
 // groep 1
 // CoKa CoLa - COntemporary KAgel COmposition LAb
 var o = Server.local.options;
-var supported_instruments = ["hellsbells", "snowBell", "pad"];
+var supported_instruments = ["hellsbells", "snowBell", "pad", "softpad"];
 var no_of_cols = 8;
 var col0;
 var row0, row1, row2;
@@ -512,8 +512,20 @@ s.waitForBoot({
 		totalsig = amp*env*sig;
 	    totalsig = Pan2.ar(totalsig, pan, env);
 		Out.ar(out,  FreeVerb.ar(Splay.ar(totalsig)));
-}).add;
+	}).add;
 
+	SynthDef(\softpad, { | out=0, pan=0, freqstart=440, freqend=880, amp=0.1, dur=2, detune=#[1, 0.998, 0.999, 1.001, 1.002], cutofffreq=10, cutofflow=400, cutoffhigh=700 |
+		var sig, env, totalsig;
+		var cutoffavg= (cutofflow+cutoffhigh)/2;
+		var cutoffdiff= cutoffhigh-cutofflow;
+		var attack = min(1,dur/2);
+		var release= min(1,dur/2)*2;
+		sig = BPF.ar(LPF.ar(LFTri.ar(XLine.kr(freqstart,freqend,dur)*detune)*LFPulse.ar(XLine.kr(freqstart,freqend,dur)*detune), ((SinOsc.kr(cutofffreq)*cutoffavg)+(cutoffavg+cutofflow))), 100);
+		env = EnvGen.kr(Env.linen(attack, dur-(attack+release), release), doneAction:2);
+		totalsig = amp*env*sig;
+		totalsig = Pan2.ar(totalsig, pan, env);
+		Out.ar(out, Splay.ar(totalsig));
+	}).add;
 	s.sync;
 
 	w = Window(bounds: Rect(0, 0, width, height));

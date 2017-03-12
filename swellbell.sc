@@ -411,37 +411,20 @@ o.memSize = 8192*30;
 					Pdef(("p"++i).asSymbol).quant = 0;
 					Pdef(("p"++i).asSymbol).fadeTime = 0.1;
 
-					if ((vola <= volb), {
-						Pdef(("p"++i).asSymbol,
+					Pdef(("p"++i).asSymbol,
 						Pbind(
 							\instrument, instrname.asSymbol,
-							\freqstart, Pseq([f1a], 1),
-							\freqend, Pseq([f1b], 1),
+							\freqstart, Pseq([f1a.midicps], 1),
+							\freqend, Pseq([f1b.midicps], 1),
 							\startvol, Pseq([vola], 1),
 							\endvol, Pseq([volb], 1),
 							\timespan, Pseq([tspan], 1),
-							\amp, Pseq([(vola+volb)/2], 1),
+							\amp, Pseq([vola], 1),
 							\dur, Pseq([tspan],1),
-							\intraampstart, 0.1,
-							\iontraampend, 1,
+							\intraampstart, 1,
+							\intraampend, (volb/vola),
 						);
 					);
-					}, /* else */ {
-						Pdef(("p"++i).asSymbol,
-						Pbind(
-							\instrument, instrname.asSymbol,
-							\freqstart, Pseq([f1a], 1),
-							\freqend, Pseq([f1b], 1),
-							\startvol, Pseq([vola], 1),
-							\endvol, Pseq([volb], 1),
-							\timespan, Pseq([tspan], 1),
-							\amp, Pseq([(vola+volb)/2], 1),
-							\dur, Pseq([tspan],1),
-                            \intraampstart, 1,
-							\iontraampend, 0.1,
-						);
-					);
-					});
 
 					enabledkeys = enabledkeys.add(("p"++i).asSymbol);
 				});

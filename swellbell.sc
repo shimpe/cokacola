@@ -2,7 +2,7 @@
 // groep 1
 // CoKa CoLa - COntemporary KAgel COmposition LAb
 var o = Server.local.options;
-var supported_instruments = ["hellsbells"];
+var supported_instruments = ["hellsbells", "snowBell"];
 var no_of_cols = 8;
 var col0;
 var row0, row1, row2;
@@ -490,6 +490,14 @@ s.waitForBoot({
 
 		var signal = (10*amp/u.size)*EnvGen.kr(Env.perc(0.1,dur,1), doneAction:Done.freeSelf)*DynKlank.ar(`[u*XLine.kr(freqstart, freqend, dur), v, v], BrownNoise.ar([0.007,0.007]));
 		Out.ar(out, Pan2.ar(signal));
+	}).add;
+
+	SynthDef(\snowBell, { | out=0, pan=0, freqstart=440, freqend=880, amp=0.1, dur=2|
+		var x, env;
+		env = EnvGen.kr(Env.perc(0.001, 550/freqstart, amp), doneAction:2);
+		x = Mix.fill(6, {SinOsc.ar(XLine.ar(freqstart,freqend,dur), 0, Rand(0.1,0.2))});
+		x = Pan2.ar(x, pan, env);
+		Out.ar(out, x);
 	}).add;
 
 	s.sync;

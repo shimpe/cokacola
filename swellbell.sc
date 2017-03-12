@@ -371,7 +371,8 @@ o.memSize = 8192*30;
 		sequencemodel[\data][idx.asSymbol] = (\key: ("low_"++el[0]), \absduration : el.size*10);
 	});
 
-	~sequencemodel = sequencemodel;
+	~sequencemodel[\data] = sequencemodel[\data];
+	self[\stepbuttons][0].valueAction_(1);
 });
 
 ~ui.on_play_slide = ({| self |

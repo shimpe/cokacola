@@ -87,7 +87,7 @@ o.memSize = 8192*30;
 });
 
 ~slidecollection.on_load = ({ |self, name |
-	~slidecollection.data = Object.readArchive(Document.current.dir +/+ name);
+	~slidecollection[\data] = Object.readArchive(Document.current.dir +/+ name);
 });
 
 ~sequencemodel = (); // mapping from ( step idx ) => ( low/mid/high, slide index)
@@ -97,7 +97,7 @@ o.memSize = 8192*30;
 	d.writeArchive(Document.current.dir +/+ name);
 });
 ~sequencemodel.on_load = ({ | self, name|
-	~sequencemodel.data = Object.readArchive(Document.current.dir +/+ name);
+	~sequencemodel[\data] = Object.readArchive(Document.current.dir +/+ name);
 });
 
 ~ui = ();
@@ -338,7 +338,7 @@ o.memSize = 8192*30;
 	self[\set_active_slidekey].value(self, "low_0");
 	self[\update_listview_colors].value(self, slidecollection);
 	self[\on_step_button].value(self, 0, ~sequencemodel, ~slidecollection);
-	self[\absduration].value_(~sequencemodel[\data][~active_step_button.asSymbol][\key]);
+	self[\absduration].value_(~sequencemodel[\data][~active_step_button.asSymbol][\absduration]);
 });
 
 // read a text file containing a single line with slide numbers, e.g.
@@ -368,7 +368,7 @@ o.memSize = 8192*30;
 	});
 
 	result.do({ | el, idx |
-		sequencemodel[\data][idx.asSymbol] = (\key: ("low_"++el[0]), \absduration : el.size*10);
+		sequencemodel[\data][idx.asSymbol] = (\key: ("low_"++el[0]), \absduration : (el.size*10));
 	});
 
 	~sequencemodel[\data] = sequencemodel[\data];
@@ -890,5 +890,3 @@ s.waitForBoot({
 });
 
 )
-
-

@@ -348,7 +348,7 @@ o.memSize = 8192*30;
 	var file, result, sequencemodel;
 	sequencemodel = ();
 	sequencemodel.data = ();
-	file = File("composition.txt","r");
+	file = File("/home/shimpe/development/supercollider/cokacola/cokacola/composition.txt","r");
 	result = List.new;
 	result = result.add(List.new);
 	file.getLine(1024)
@@ -372,6 +372,8 @@ o.memSize = 8192*30;
 	});
 
 	~sequencemodel[\data] = sequencemodel[\data];
+	~sequencemodel[\data].postln;
+	~sequencemodel[\data][\2].postln;
 	self[\stepbuttons][0].valueAction_(1);
 });
 

@@ -99,6 +99,7 @@ o.memSize = 8192*30;
 ~sequencemodel.on_load = ({ | self, name|
 	~sequencemodel[\data] = Object.readArchive(Document.current.dir +/+ name);
 });
+~sequencemodel[\data][\temposcaler] = 1.0;
 
 ~ui = ();
 ~ui.volumes = ();
@@ -338,7 +339,13 @@ o.memSize = 8192*30;
 	self[\set_active_slidekey].value(self, "low_0");
 	self[\update_listview_colors].value(self, slidecollection);
 	self[\on_step_button].value(self, 0, ~sequencemodel, ~slidecollection);
+	~sequencemodel[\data][~active_step_button.asSymbol].postln;
 	self[\absduration].value_(~sequencemodel[\data][~active_step_button.asSymbol][\absduration]);
+	if ((~sequencemodel[\data][\temposcaler].notNil), {
+		self[\temposcaler].value_(~sequencemodel[\data][\temposcaler]);
+	}, /* else */ {
+		self[\temposcaler].value_(1.0);
+	});
 });
 
 // read a text file containing a single line with slide numbers, e.g.
@@ -348,7 +355,7 @@ o.memSize = 8192*30;
 	var file, result, sequencemodel;
 	sequencemodel = ();
 	sequencemodel.data = ();
-	file = File("/home/shimpe/development/supercollider/cokacola/cokacola/composition.txt","r");
+	file = File(Document.current.dir +/+ "composition.txt","r");
 	result = List.new;
 	result = result.add(List.new);
 	file.getLine(1024)
@@ -368,12 +375,10 @@ o.memSize = 8192*30;
 	});
 
 	result.do({ | el, idx |
-		sequencemodel[\data][idx.asSymbol] = (\key: ("low_"++el[0]), \absduration : (el.size*10));
+		sequencemodel[\data][idx.asSymbol] = (\key: ("low_"++el[0]), \absduration : (el.size*5));
 	});
 
 	~sequencemodel[\data] = sequencemodel[\data];
-	~sequencemodel[\data].postln;
-	~sequencemodel[\data][\2].postln;
 	self[\stepbuttons][0].valueAction_(1);
 });
 
@@ -383,7 +388,8 @@ o.memSize = 8192*30;
 	var enabledkeys = [];
 	no_of_cols.do({ | i |
 		var steps = ~ui[\columns][i].steps.value.asInteger;
-		var tspan = ((~ui[\columns][i].duration.value.asFloat)/total_duration)*(~ui[\absduration].value.asFloat);
+		var tscaler = ~ui[\temposcaler].value.asFloat;
+		var tspan = ((~ui[\columns][i].duration.value.asFloat)/total_duration)*(~ui[\absduration].value.asFloat/tscaler);
 		if ((steps == 0), {
 			//"REST".postln;
 			if ((~ui[\columns][i].enabled.value),{
@@ -501,6 +507,9 @@ o.memSize = 8192*30;
 	self[\on_play_step].value(self);
 });
 
+~ui.on_tempo_scaler = ({ |self, sequencemodel |
+	sequencemodel[\data][\temposcaler] = self.temposcaler.value;
+});
 
 s.waitForBoot({
 	var width = 1900;
@@ -661,6 +670,8 @@ s.waitForBoot({
 	row2cols = HLayout.new;
 
 	buttoncol = VLayout.new;
+	~ui.temposcalerlbl = StaticText(w, Rect()).string_("Tempo Scaler");
+	~ui.temposcaler = TextField(w, Rect()).string_("1.0").action_({ ~ui[\on_tempo_scaler].value(~ui, ~sequencemodel); });
 	~ui.loadbutton = Button.new(w, Rect()).string_("Load").states_([["Load",Color.black,Color.gray]]).action_({ ~ui[\on_load].value(~ui, ~slidecollection, ~sequencemodel)});
 	~ui.importstepsbutton = Button.new(w, Rect()).string_("Import steps").states_([["Import steps",Color.black,Color.gray]]).action_({ ~ui[\on_import_steps].value(~ui, ~sequencemodel)});
 	absdurationlabel = StaticText(w, Rect()).string_("Abs. Dur. (sec)");
@@ -686,6 +697,8 @@ s.waitForBoot({
 	~ui.unregisterstepbutton = Button.new(w, Rect()).string_("Unregister step").states_([["Unregister step",Color.black,Color.red]]).action_({~ui[\on_unregister_active_step_button].value(~ui, ~slidecollection, ~sequencemodel)});
 
 	~ui.savebutton = Button.new(w, Rect()).string_("Save").states_([["Save",Color.black,Color.gray]]).action_({ ~ui[\on_save].value(~ui, ~slidecollection, ~sequencemodel); });
+	buttoncol.add(~ui.temposcalerlbl);
+	buttoncol.add(~ui.temposcaler);
 	buttoncol.add(~ui.loadbutton);
 	buttoncol.add(~ui.importstepsbutton);
 	buttoncol.add(absdurationlabel);
@@ -774,6 +787,8 @@ s.waitForBoot({
 
 	row2.add(row2cols);
 	col0.add(row2);
+
+	~ui[\stepbuttons][0].valueAction_(1);
 
 	~ui.canvas.drawFunc_({ |v|
 		var margin = 10;

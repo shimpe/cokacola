@@ -394,7 +394,7 @@ o.memSize = 8192*30;
 			//"REST".postln;
 			if ((~ui[\columns][i].enabled.value),{
 				Pdef(("p"++i).asSymbol).quant = 0;
-				Pdef(("p"++i).asSymbol).fadeTime = 0.1;
+				Pdef(("p"++i).asSymbol).fadeTime = 0;
 				Pdef(("p"++i).asSymbol,
 					Pbind(
 						\instrument, \default,
@@ -417,7 +417,7 @@ o.memSize = 8192*30;
 				//"ONESTEP".postln;
 				if ((~ui[\columns][i].enabled.value),{
 					Pdef(("p"++i).asSymbol).quant = 0;
-					Pdef(("p"++i).asSymbol).fadeTime = 0.1;
+					Pdef(("p"++i).asSymbol).fadeTime = 0;
 
 					Pdef(("p"++i).asSymbol,
 						Pbind(
@@ -453,7 +453,7 @@ o.memSize = 8192*30;
 				if ((~ui[\columns][i].enabled.value),{
 					//"MULTISTEP".postln;
 					Pdef(("p"++i).asSymbol).quant = 0;
-					Pdef(("p"++i).asSymbol).fadeTime = 0.1;
+					Pdef(("p"++i).asSymbol).fadeTime = 0;
 					Pdef(("p"++i).asSymbol,
 						Pbind(
 							\instrument, instrname.asSymbol,

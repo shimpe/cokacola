@@ -407,7 +407,7 @@ o = [
 	Array.prNew(32),  "C4",  "ppp",  "5",  
 	"ff",  "C6",  "10",  "2",  
 	Event.prNew,  Array.prNew(32),  "C6",  "pp",  
-	"11",  "p",  "F5",  "-2",  
+	"7",  "p",  "F5",  "-2",  
 	"1.5",  Event.prNew,  Array.prNew(32),  "C6",  
 	"ff",  "4",  "ppp",  "C4",  
 	"-10",  "2",  Event.prNew,  Array.prNew(32),  

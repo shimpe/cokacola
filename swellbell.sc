@@ -364,18 +364,18 @@ o.memSize = 8192*30;
 	.split($ )
 	.collect({|s| s.asFloat })
 	.do({|x|
-		var y = x;
 		if (((result.last.size != 0) && (x != result.last.last)), {
 			result = result.add(List.new);
 		});
-		if ((x == 0),{
-			y = 25;
-		});
-		result.last.add(y);
+		result.last.add(x);
 	});
 
 	result.do({ | el, idx |
-		sequencemodel[\data][idx.asSymbol] = (\key: ("low_"++el[0]), \absduration : (el.size*5));
+		var num = el[0];
+		if ((num == 0), {
+			num = 25;
+		});
+		sequencemodel[\data][idx.asSymbol] = (\key: ("low_"++num), \absduration : (el.size*5));
 	});
 
 	~sequencemodel[\data] = sequencemodel[\data];

@@ -13,7 +13,7 @@ var absduration;
 var arr_helper1, arr_helper2;
 var current_columns_for_pattern = ();
 
-var maxvol = 10;
+var maxvol = 0;
 var minvol = -50;
 var volumedefs = [[\ffff : 9.linlin(0,9,minvol,maxvol).round(0.01)], [\fff : 8.linlin(0,9,minvol,maxvol).round(0.01)], [\ff : 7.linlin(0,9,minvol,maxvol).round(0.01)], [\f : 6.linlin(0,9,minvol,maxvol).round(0.01)], [\mf : 5.linlin(0,9,minvol,maxvol).round(0.01)], [\mp : 4.linlin(0,9,minvol,maxvol).round(0.01)], [\p : 3.linlin(0,9,minvol,maxvol).round(0.01)], [\pp : 2.linlin(0,9,minvol,maxvol).round(0.01)], [\ppp : 1.linlin(0,9,minvol,maxvol).round(0.01)], [\pppp : 0.linlin(0,9,minvol,maxvol).round(0.01)]];
 
@@ -349,8 +349,8 @@ o.memSize = 8192*30;
 });
 
 // read a text file containing a single line with slide numbers, e.g.
-// 00 17 17 00 19 24 24 20 20 21 21 02 02 04 12 09 17 20 03 10 05 05 13 07 06 06 06 17 17 11 00 21 00 15 15 01 17 14 14 15 16 00 15 11 11 02 15 01 15 00
-// 00
+// 00 17 17 00 19 24 24 20 20 21 21 02 02 04 12 17 17 11 00 21 00 15 15 01 17 14 14 15 16 00 15 11 11 02 15 01 15 00 00
+// repeated numbers increase the time duration of the slide
 ~ui.on_import_steps = ({ | self |
 	var file, result, sequencemodel;
 	sequencemodel = ();
@@ -558,9 +558,10 @@ s.waitForBoot({
 		var cutoffdiff= cutoffhigh-cutofflow;
 		var attack = min(1,dur/3);
 		var release= min(1,dur/3)*3;
+	    var ampcompensation = detune.size;
 	sig = MoogFF.ar(LFSaw.ar(1*XLine.kr(freqstart,freqend,dur)*detune)+LFSaw.ar(2*XLine.kr(freqstart,freqend,dur)*detune)+LFSaw.ar(4*XLine.kr(freqstart,freqend,dur)*detune)+LFSaw.ar(8*XLine.kr(freqstart,freqend,dur)*detune), ((LFPulse.kr(cutofffreq)*cutoffavg)+(cutoffavg+cutofflow)));
 	    env = EnvGen.kr(Env.linen(attack, dur-(attack+release), release), doneAction:2);
-		totalsig = XLine.kr(intraampstart,intraampend,dur)*env*sig;
+		totalsig = XLine.kr(intraampstart/ampcompensation,intraampend/ampcompensation,dur)*env*sig;
 	    totalsig = Pan2.ar(totalsig, pan, env);
 		Out.ar(out,  FreeVerb.ar(Splay.ar(totalsig)));
 	}).add;
@@ -575,7 +576,7 @@ s.waitForBoot({
 		env = EnvGen.kr(Env.linen(attack, dur-(attack+release), release), doneAction:2);
 		totalsig = amp*env*sig;
 		totalsig = Pan2.ar(totalsig, pan, env);
-		Out.ar(out, Splay.ar(totalsig));
+		Out.ar(out, Splay.ar(totalsig!2));
 	}).add;
 
 	s.sync;
